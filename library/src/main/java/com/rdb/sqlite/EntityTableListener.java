@@ -1,4 +1,4 @@
-package com.rdb.sqlite.entity;
+package com.rdb.sqlite;
 
 public interface EntityTableListener {
 

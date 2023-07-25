@@ -1,11 +1,9 @@
-package com.rdb.sqlite.entity;
+package com.rdb.sqlite;
 
 import android.content.Context;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
-
-import com.rdb.sqlite.SQLiteHelper;
 
 import java.util.HashMap;
 import java.util.List;

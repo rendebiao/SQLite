@@ -1,10 +1,9 @@
-package com.rdb.sqlite.entity;
+package com.rdb.sqlite;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import com.rdb.sqlite.Table;
-import com.rdb.sqlite.entity.annotation.EntityColumn;
+import com.rdb.sqlite.annotation.EntityColumn;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

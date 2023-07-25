@@ -1,4 +1,4 @@
-package com.rdb.sqlite.entity.annotation;
+package com.rdb.sqlite.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
