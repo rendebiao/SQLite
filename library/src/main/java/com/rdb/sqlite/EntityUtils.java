@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.rdb.sqlite.annotation.EntityColumn;
 import com.rdb.sqlite.annotation.EntityVersion;
+import com.rdb.sqlite.converter.EntityColumnConverter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Entity {
+class EntityUtils {
 
     private static Map<String, EntityColumnConverter> converters = new HashMap<>();
 

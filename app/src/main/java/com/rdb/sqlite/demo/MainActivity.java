@@ -8,12 +8,13 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.rdb.sqlite.Column;
+import com.rdb.sqlite.EntitySQLite;
+import com.rdb.sqlite.EntityTable;
 import com.rdb.sqlite.SQLite;
 import com.rdb.sqlite.SQLiteHelper;
 import com.rdb.sqlite.Table;
 import com.rdb.sqlite.TableSQLBuilder;
-import com.rdb.sqlite.entity.EntityHelper;
-import com.rdb.sqlite.entity.EntityTable;
+import com.rdb.sqlite.converter.ObjectConverter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,10 +30,13 @@ public class MainActivity extends AppCompatActivity {
         user.age = 30;
 
         //Table
-        SQLiteHelper helper = new SQLiteHelper(this, "db", null, 0) {
+        SQLiteHelper helper = new SQLiteHelper(this, "db", null, 1) {
             @Override
             public void onCreate(SQLiteDatabase db) {
-
+                String sql = new TableSQLBuilder("user").addPrimaryColumn("id", Column.TEXT, false)
+                        .addColumn("name", Column.TEXT, false)
+                        .addColumn("age", Column.INTEGER, false).build();
+                db.execSQL(sql);
             }
 
             @Override
@@ -40,14 +44,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
-        String sql = new TableSQLBuilder("user").addPrimaryColumn("id", Column.TEXT, false)
-                .addColumn("name", Column.TEXT, false)
-                .addColumn("age", Column.INTEGER, false).build();
+
         SQLite sqLite = new SQLite(helper);
         Table table = sqLite.table("user");
-        table.dropTable();
-        table.execSQL(sql);
-        table.insert(user, new Table.ObjectConverter<User>() {
+        table.insert(user, new ObjectConverter<User>() {
             @Override
             public ContentValues convertObject(User object) {
                 ContentValues values = new ContentValues();
@@ -59,11 +59,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //EntityTable
-        EntityHelper entityHelper = new EntityHelper(this, "entity", null);
-        EntityTable<User> userTable = new EntityTable<>(entityHelper, User.class);
-        userTable.dropTable();
+        EntitySQLite entitySQLite = new EntitySQLite(this, "db", null);
+        EntityTable<User> userTable = entitySQLite.table(User.class);
         userTable.insert(user);
-
     }
 
 }

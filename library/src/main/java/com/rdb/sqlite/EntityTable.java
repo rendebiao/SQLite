@@ -4,26 +4,29 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.rdb.sqlite.annotation.EntityColumn;
+import com.rdb.sqlite.converter.CursorConverter;
+import com.rdb.sqlite.converter.ObjectConverter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EntityTable<T> extends Table {
+public class EntityTable<T> {
 
     private Class<T> tClass;
-    private EntityHelper entityHelper;
+    private String tableName;
+    private SQLiteHelper helper;
     private ObjectConverter<T> objectConverter;
     private CursorConverter<T> cursorConverter;
 
-    public EntityTable(EntityHelper entityHelper, final Class<T> tClass) {
-        super(entityHelper, Entity.getTableName(tClass));
+    EntityTable(SQLiteHelper helper, final Class<T> tClass) {
+        tableName = EntityUtils.getTableName(tClass);
         this.tClass = tClass;
-        this.entityHelper = entityHelper;
+        this.helper = helper;
         if (tClass == null) {
             throw new RuntimeException("tClass == null");
         }
-        if (!Entity.hasEmptyConstructor(tClass)) {
+        if (!EntityUtils.hasEmptyConstructor(tClass)) {
             throw new RuntimeException(tClass + " has not empty constructor");
         }
         this.objectConverter = new ObjectConverter<T>() {
@@ -38,18 +41,17 @@ public class EntityTable<T> extends Table {
                 return EntityTable.convertCursor(cursor, tClass);
             }
         };
-        entityHelper.addTable(tClass);
     }
 
     public static <T> T convertCursor(Cursor cursor, Class<T> tClass) {
         T object = null;
         try {
             object = tClass.newInstance();
-            List<Field> fields = Entity.getUnStaticDeclaredFields(tClass);
+            List<Field> fields = EntityUtils.getUnStaticDeclaredFields(tClass);
             for (int i = 0; i < fields.size(); i++) {
                 Field field = fields.get(i);
-                if (Entity.isColumn(field) && Entity.support(field)) {
-                    Entity.cursorToFieldValue(cursor, object, field);
+                if (EntityUtils.isColumn(field) && EntityUtils.support(field)) {
+                    EntityUtils.cursorToFieldValue(cursor, object, field);
                 }
             }
         } catch (Exception e) {
@@ -59,41 +61,39 @@ public class EntityTable<T> extends Table {
     }
 
     public static <T> ContentValues convertObject(T object, Class<T> tClass) {
-        List<Field> fields = Entity.getUnStaticDeclaredFields(tClass);
+        List<Field> fields = EntityUtils.getUnStaticDeclaredFields(tClass);
         ContentValues contentValues = new ContentValues();
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
-            EntityColumn column = Entity.getColumn(field);
+            EntityColumn column = EntityUtils.getColumn(field);
             if (column == null || !column.hide()) {
-                Entity.fieldValueToContentValues(contentValues, object, field, column != null && column.autoIncrement());
+                EntityUtils.fieldValueToContentValues(contentValues, object, field, column != null && column.autoIncrement());
             }
         }
         return contentValues;
     }
 
     public boolean insert(T object) {
-        return insert(object, objectConverter);
+        return SQLiteOperator.insert(helper, tableName, object, objectConverter);
     }
 
     public boolean replace(T object) {
-        return replace(object, objectConverter);
+        return SQLiteOperator.replace(helper, tableName, object, objectConverter);
+    }
+
+    public boolean delete(String whereClause, String[] whereArgs) {
+        return SQLiteOperator.delete(helper, tableName, whereClause, whereArgs);
     }
 
     public final T queryObject(String[] columns, String selection, String[] selectionArgs) {
-        return queryObject(columns, selection, selectionArgs, cursorConverter);
+        return SQLiteOperator.queryObject(helper, tableName, columns, selection, selectionArgs, cursorConverter);
     }
 
     public final ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs) {
-        return queryList(columns, selection, selectionArgs, null, null, null);
+        return SQLiteOperator.queryList(helper, tableName, columns, selection, selectionArgs, cursorConverter);
     }
 
     public final ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
-        return queryList(columns, selection, selectionArgs, groupBy, having, orderBy, cursorConverter);
-    }
-
-    @Override
-    public void dropTable() {
-        super.dropTable();
-        entityHelper.delTable(tClass);
+        return SQLiteOperator.queryList(helper, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, cursorConverter);
     }
 }

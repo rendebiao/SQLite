@@ -1,7 +1,7 @@
 package com.rdb.sqlite.demo;
 
-import com.rdb.sqlite.entity.annotation.EntityColumn;
-import com.rdb.sqlite.entity.annotation.EntityVersion;
+import com.rdb.sqlite.annotation.EntityColumn;
+import com.rdb.sqlite.annotation.EntityVersion;
 
 @EntityVersion(value = 0)
 public class User {

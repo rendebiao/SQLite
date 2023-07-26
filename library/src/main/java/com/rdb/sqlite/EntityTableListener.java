@@ -12,9 +12,9 @@ public interface EntityTableListener {
      * @param newVersion
      * @return
      */
-    boolean onVersionChanged(EntityHelper entityHelper, Class tClass, String tableName, int oldVersion, int newVersion);
+    boolean onVersionChanged(SQLiteHelper entityHelper, Class tClass, String tableName, int oldVersion, int newVersion);
 
-    void beforeRecreteTable(EntityHelper entityHelper, Class tClass, String tableName);
+    void beforeRecreteTable(SQLiteHelper entityHelper, Class tClass, String tableName);
 
-    void afterRecreteTable(EntityHelper entityHelper, Class tClass, String tableName);
+    void afterRecreteTable(SQLiteHelper entityHelper, Class tClass, String tableName);
 }
