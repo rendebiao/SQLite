@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class SQLiteHelper extends SQLiteOpenHelper {
 
+    private final AtomicInteger atomicInteger = new AtomicInteger();
     private SQLiteDatabase dataBase;
-    private AtomicInteger atomicInteger = new AtomicInteger();
 
     public SQLiteHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -30,7 +30,8 @@ public abstract class SQLiteHelper extends SQLiteOpenHelper {
     }
 
     public synchronized void closeDatabase() {
-        if (atomicInteger.decrementAndGet() == 0) {
+        if (atomicInteger.get() == 1) {
+            atomicInteger.decrementAndGet();
             dataBase.close();
             dataBase = null;
         }

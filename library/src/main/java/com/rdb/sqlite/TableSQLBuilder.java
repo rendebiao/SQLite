@@ -6,10 +6,10 @@ import java.util.List;
 
 public class TableSQLBuilder {
 
-    private String tableName;
-    private StringBuffer sql = new StringBuffer();
-    private List<Column> columns = new ArrayList<>();
-    private List<Column> primaryColumns = new ArrayList<>();
+    private final String tableName;
+    private final StringBuffer sql = new StringBuffer();
+    private final List<Column> columns = new ArrayList<>();
+    private final List<Column> primaryColumns = new ArrayList<>();
 
     public TableSQLBuilder(String tableName) {
         this.tableName = tableName;

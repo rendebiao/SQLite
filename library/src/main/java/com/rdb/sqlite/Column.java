@@ -9,11 +9,11 @@ public class Column implements Comparable<Column> {
     public static final String TEXT = "TEXT";
     public static final String BLOB = "BLOB";
     public static final String INTEGER = "INTEGER";
-    private String name;
-    private String type;
-    private boolean nullable;
-    private boolean primary;
-    private boolean autoIncrement;
+    private final String name;
+    private final String type;
+    private final boolean nullable;
+    private final boolean primary;
+    private final boolean autoIncrement;
 
     public Column(String name, String type, boolean nullable, boolean primary, boolean autoIncrement) {
         this.name = name;

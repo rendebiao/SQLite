@@ -1,15 +1,21 @@
 package com.rdb.sqlite;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class SQLite {
 
-    private SQLiteHelper helper;
-    private Map<String, Table> tableMap = new HashMap<>();
+    private final SQLiteHelper helper;
+    private final Map<String, Table> tableMap = new HashMap<>();
 
     public SQLite(SQLiteHelper helper) {
         this.helper = helper;
+    }
+
+    static void log(String msg) {
+        Log.e("SQLite", msg);
     }
 
     public Table table(String tableName) {
@@ -33,11 +39,11 @@ public class SQLite {
         return SQLiteOperator.dropTable(helper, tableName);
     }
 
-    public boolean execSQL(SQLiteHelper helper, String sql) {
+    public boolean execSQL(String sql) {
         return SQLiteOperator.execSQL(helper, sql);
     }
 
-    public boolean execSQL(SQLiteHelper helper, String sql, Object[] bindArgs) {
+    public boolean execSQL(String sql, Object[] bindArgs) {
         return SQLiteOperator.execSQL(helper, sql, bindArgs);
     }
 }
