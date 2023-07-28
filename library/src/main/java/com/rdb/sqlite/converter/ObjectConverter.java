@@ -1,7 +1,10 @@
 package com.rdb.sqlite.converter;
 
-import android.content.ContentValues;
+import com.rdb.sqlite.ContentValuesWrapper;
+import com.rdb.sqlite.CursorWrapper;
 
 public interface ObjectConverter<T> {
-    ContentValues convertObject(T object);
+    void convertObject(ContentValuesWrapper contentValues, T object);
+
+    T convertCursor(CursorWrapper cursor);
 }

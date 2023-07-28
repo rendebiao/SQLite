@@ -4,7 +4,7 @@ import com.rdb.sqlite.annotation.EntityColumn;
 import com.rdb.sqlite.annotation.EntityVersion;
 
 @EntityVersion(value = 0)
-class EntityTableInfo {
+class EntityTableInfo extends Entity {
 
     @EntityColumn(hide = false, primary = true, nullable = false)
     private String tableName;

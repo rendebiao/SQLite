@@ -18,6 +18,10 @@ public class SQLite {
         Log.e("SQLite", msg);
     }
 
+    static void log(String msg, Exception e) {
+        Log.e("SQLite", msg, e);
+    }
+
     public Table table(String tableName) {
         Table table = tableMap.get(tableName);
         if (table == null) {

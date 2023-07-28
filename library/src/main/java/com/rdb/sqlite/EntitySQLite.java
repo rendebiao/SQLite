@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.rdb.sqlite.converter.EntityColumnConverter;
+import com.rdb.sqlite.converter.FeildConverter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +37,16 @@ public class EntitySQLite {
         Log.e("EntitySQLite", msg);
     }
 
-    public static void registerEntityColumnConverter(String type, EntityColumnConverter columnConverter) {
-        Entity.converters.put(type, columnConverter);
+    static void log(String msg, Exception e) {
+        Log.e("EntitySQLite", msg, e);
+    }
+
+    public static void registerFeildConverter(String type, FeildConverter feildConverter) {
+        Entity.converters.put(type, feildConverter);
+    }
+
+    public static void checkEntityClass(Class tClass) {
+        Entity.checkClass(tClass);
     }
 
     private synchronized void initTableInfoTable() {
@@ -49,7 +57,7 @@ public class EntitySQLite {
             for (EntityTableInfo tableInfo : tableInfoList) {
                 Class tClass = Entity.getClass(tableInfo.getTableName());
                 if (tClass != null) {
-                    if (Entity.hasEmptyConstructor(tClass)) {
+                    if (Entity.haveEmptyConstructor(tClass)) {
                         tableInfoMap.put(tClass, tableInfo);
                         int classVersion = Entity.getClassVersion(tClass);
                         String createTableSql = Entity.getCreateTableSQL(tClass);

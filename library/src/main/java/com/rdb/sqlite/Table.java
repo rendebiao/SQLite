@@ -2,7 +2,6 @@ package com.rdb.sqlite;
 
 import android.content.ContentValues;
 
-import com.rdb.sqlite.converter.CursorConverter;
 import com.rdb.sqlite.converter.ObjectConverter;
 
 import java.util.ArrayList;
@@ -41,15 +40,15 @@ public class Table {
         return SQLiteOperator.delete(helper, tableName, whereClause, whereArgs);
     }
 
-    public final <T> T queryObject(String[] columns, String selection, String[] selectionArgs, CursorConverter<T> converter) {
+    public final <T> T queryObject(String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
         return SQLiteOperator.queryObject(helper, tableName, columns, selection, selectionArgs, converter);
     }
 
-    public final <T> ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs, CursorConverter<T> converter) {
+    public final <T> ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
         return SQLiteOperator.queryList(helper, tableName, columns, selection, selectionArgs, converter);
     }
 
-    public final <T> ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, CursorConverter<T> converter) {
+    public final <T> ArrayList<T> queryList(String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectConverter<T> converter) {
         return SQLiteOperator.queryList(helper, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, converter);
     }
 }

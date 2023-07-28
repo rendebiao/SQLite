@@ -2,7 +2,7 @@ package com.rdb.sqlite;
 
 import com.rdb.sqlite.annotation.EntityColumn;
 import com.rdb.sqlite.annotation.EntityVersion;
-import com.rdb.sqlite.converter.EntityColumnConverter;
+import com.rdb.sqlite.converter.FeildConverter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -15,44 +15,58 @@ import java.util.Map;
 
 class Entity {
 
-
-    static Map<String, EntityColumnConverter> converters = new HashMap<>();
+    static Map<String, FeildConverter> converters = new HashMap<>();
 
     static {
-        converters.put(Boolean.TYPE.getName(), EntityColumnConverter.BOOLEAN_CONVERTER);
-        converters.put(Boolean.class.getName(), EntityColumnConverter.BOOLEAN_CONVERTER);
-        converters.put(byte[].class.getName(), EntityColumnConverter.BYTES_CONVERTER);
-        converters.put(Character.TYPE.getName(), EntityColumnConverter.CHAR_CONVERTER);
-        converters.put(Character.class.getName(), EntityColumnConverter.CHAR_CONVERTER);
-        converters.put(Byte.TYPE.getName(), EntityColumnConverter.BYTE_CONVERTER);
-        converters.put(Byte.class.getName(), EntityColumnConverter.BYTE_CONVERTER);
-        converters.put(Short.TYPE.getName(), EntityColumnConverter.SHORT_CONVERTER);
-        converters.put(Short.class.getName(), EntityColumnConverter.SHORT_CONVERTER);
-        converters.put(Integer.TYPE.getName(), EntityColumnConverter.INTEGER_CONVERTER);
-        converters.put(Integer.class.getName(), EntityColumnConverter.INTEGER_CONVERTER);
-        converters.put(Long.TYPE.getName(), EntityColumnConverter.LONG_CONVERTER);
-        converters.put(Long.class.getName(), EntityColumnConverter.LONG_CONVERTER);
-        converters.put(Float.TYPE.getName(), EntityColumnConverter.FLOAT_CONVERTER);
-        converters.put(Float.class.getName(), EntityColumnConverter.FLOAT_CONVERTER);
-        converters.put(Double.TYPE.getName(), EntityColumnConverter.DOUBLE_CONVERTER);
-        converters.put(Double.class.getName(), EntityColumnConverter.DOUBLE_CONVERTER);
-        converters.put(String.class.getName(), EntityColumnConverter.STRING_CONVERTER);
+        converters.put(Boolean.TYPE.getName(), FeildConverter.BOOLEAN_CONVERTER);
+        converters.put(Boolean.class.getName(), FeildConverter.BOOLEAN_CONVERTER);
+        converters.put(byte[].class.getName(), FeildConverter.BYTES_CONVERTER);
+        converters.put(Character.TYPE.getName(), FeildConverter.CHAR_CONVERTER);
+        converters.put(Character.class.getName(), FeildConverter.CHAR_CONVERTER);
+        converters.put(Byte.TYPE.getName(), FeildConverter.BYTE_CONVERTER);
+        converters.put(Byte.class.getName(), FeildConverter.BYTE_CONVERTER);
+        converters.put(Short.TYPE.getName(), FeildConverter.SHORT_CONVERTER);
+        converters.put(Short.class.getName(), FeildConverter.SHORT_CONVERTER);
+        converters.put(Integer.TYPE.getName(), FeildConverter.INTEGER_CONVERTER);
+        converters.put(Integer.class.getName(), FeildConverter.INTEGER_CONVERTER);
+        converters.put(Long.TYPE.getName(), FeildConverter.LONG_CONVERTER);
+        converters.put(Long.class.getName(), FeildConverter.LONG_CONVERTER);
+        converters.put(Float.TYPE.getName(), FeildConverter.FLOAT_CONVERTER);
+        converters.put(Float.class.getName(), FeildConverter.FLOAT_CONVERTER);
+        converters.put(Double.TYPE.getName(), FeildConverter.DOUBLE_CONVERTER);
+        converters.put(Double.class.getName(), FeildConverter.DOUBLE_CONVERTER);
+        converters.put(String.class.getName(), FeildConverter.STRING_CONVERTER);
     }
 
-    public static EntityColumnConverter getEntityColumnConverter(String type) {
+    static FeildConverter getFeildConverter(String type) {
         return converters.get(type);
     }
 
-    public static String getTableName(Class tClass) {
+    static String getTableName(Class tClass) {
         return tClass.getName().replace(".", "_");
     }
 
-    public static List<Column> getColumns(Class tClass) {
+    static void checkClass(Class tClass) {
+        if (!haveEmptyConstructor(tClass)) {
+            EntitySQLite.log(tClass + " does not have an empty constructor");
+        }
+        Field[] fields = tClass.getDeclaredFields();
+        for (Field field : fields) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                EntityColumn column = field.getAnnotation(EntityColumn.class);
+                if ((column == null || !column.hide()) && !converters.containsKey(field.getType().getName())) {
+                    EntitySQLite.log(tClass + " unsupport field: " + field + " " + field.getType());
+                }
+            }
+        }
+    }
+
+    static List<Column> getColumns(Class tClass) {
         List<Column> columns = new ArrayList<>();
         Field[] fields = tClass.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            if (!Modifier.isStatic(fields[i].getModifiers())) {
-                Column column = getFieldColumn(fields[i]);
+        for (Field field : fields) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                Column column = getFieldColumn(field);
                 if (column != null) {
                     columns.add(column);
                 }
@@ -67,12 +81,12 @@ class Entity {
         return columns;
     }
 
-    public static String[] getColumnNames(Class tClass) {
+    static String[] getColumnNames(Class tClass) {
         List<String> columnNames = new ArrayList<>();
         Field[] fields = tClass.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            if (!Modifier.isStatic(fields[i].getModifiers())) {
-                Column column = getFieldColumn(fields[i]);
+        for (Field field : fields) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                Column column = getFieldColumn(field);
                 if (column != null) {
                     columnNames.add(column.getName());
                 }
@@ -82,7 +96,7 @@ class Entity {
         return columnNames.toArray(new String[columnNames.size()]);
     }
 
-    public static Column getFieldColumn(Field field) {
+    static Column getFieldColumn(Field field) {
         EntityColumn column = field.getAnnotation(EntityColumn.class);
         if (column != null && column.hide()) {
             return null;
@@ -94,7 +108,7 @@ class Entity {
         return new Column(field.getName(), type, column != null && column.nullable(), column != null && column.primary(), column != null && column.autoIncrement());
     }
 
-    public static boolean isColumn(Field field) {
+    static boolean isColumn(Field field) {
         EntityColumn column = field.getAnnotation(EntityColumn.class);
         if (column != null && column.hide()) {
             return false;
@@ -106,59 +120,59 @@ class Entity {
         return true;
     }
 
-    public static List<Field> getUnStaticDeclaredFields(Class tClass) {
+    static List<Field> getUnStaticDeclaredFields(Class tClass) {
         List<Field> fieldList = new ArrayList<>();
         Field[] fields = tClass.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            if (!Modifier.isStatic(fields[i].getModifiers())) {
-                fieldList.add(fields[i]);
+        for (Field field : fields) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                fieldList.add(field);
             }
         }
         return fieldList;
     }
 
-    public static String columnType(Field field) {
-        EntityColumnConverter columnConverter = converters.get(field.getType().getName());
-        return columnConverter == null ? null : columnConverter.getColumnType();
+    static String columnType(Field field) {
+        FeildConverter feildConverter = converters.get(field.getType().getName());
+        return feildConverter == null ? null : feildConverter.getColumnType();
     }
 
-    public static Class getClass(String tableName) {
+    static Class getClass(String tableName) {
         Class tClass = null;
         try {
             tClass = Class.forName(tableName.replace("_", "."));
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            EntitySQLite.log("getClass", e);
         }
         return tClass;
     }
 
-    public static int getClassVersion(Class tClass) {
+    static int getClassVersion(Class tClass) {
         EntityVersion version = (EntityVersion) tClass.getAnnotation(EntityVersion.class);
         return version == null ? 0 : version.value();
     }
 
-    public static boolean hasEmptyConstructor(Class tClass) {
+    static boolean haveEmptyConstructor(Class tClass) {
         try {
             tClass.getConstructor();
             return true;
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            EntitySQLite.log("hasEmptyConstructor", e);
         }
         return false;
     }
 
-    public static String getCreateTableSQL(Class tClass) {
+    static String getCreateTableSQL(Class tClass) {
         List<Column> columns = getColumns(tClass);
         TableSQLBuilder builder = new TableSQLBuilder(getTableName(tClass));
-        for (int i = 0; i < columns.size(); i++) {
-            if (columns.get(i) != null) {
-                builder.addColumn(columns.get(i));
+        for (Column column : columns) {
+            if (column != null) {
+                builder.addColumn(column);
             }
         }
         return builder.build();
     }
 
-    public static String getDropTableSQL(Class tClass) {
+    static String getDropTableSQL(Class tClass) {
         return "DROP TABLE IF EXISTS " + getTableName(tClass);
     }
 }

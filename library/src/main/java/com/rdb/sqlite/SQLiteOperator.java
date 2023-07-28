@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.rdb.sqlite.converter.CursorConverter;
 import com.rdb.sqlite.converter.ObjectConverter;
 
 import org.json.JSONArray;
@@ -21,7 +20,7 @@ class SQLiteOperator {
         try {
             insert = dataBase.insert(tableName, null, contentValues) > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("insert", e);
         }
         helper.closeDatabase();
         return insert;
@@ -33,7 +32,7 @@ class SQLiteOperator {
         try {
             replace = dataBase.replace(tableName, null, contentValues) > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("replace", e);
         }
         helper.closeDatabase();
         return replace;
@@ -45,7 +44,7 @@ class SQLiteOperator {
         try {
             update = dataBase.update(tableName, values, whereClause, whereArgs) > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("update", e);
         }
         helper.closeDatabase();
         return update;
@@ -54,11 +53,12 @@ class SQLiteOperator {
     public static <T> boolean insert(SQLiteHelper helper, String tableName, T object, ObjectConverter<T> objectConverter) {
         boolean insert = false;
         SQLiteDatabase dataBase = helper.openDatabase();
-        ContentValues contentValues = objectConverter.convertObject(object);
+        ContentValuesWrapper contentValues = new ContentValuesWrapper();
+        objectConverter.convertObject(contentValues, object);
         try {
-            insert = dataBase.insert(tableName, null, contentValues) > 0;
+            insert = dataBase.insert(tableName, null, contentValues.getContentValues()) > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("insert", e);
         }
         helper.closeDatabase();
         return insert;
@@ -67,11 +67,12 @@ class SQLiteOperator {
     public static <T> boolean replace(SQLiteHelper helper, String tableName, T object, ObjectConverter<T> objectConverter) {
         boolean replace = false;
         SQLiteDatabase dataBase = helper.openDatabase();
-        ContentValues contentValues = objectConverter.convertObject(object);
+        ContentValuesWrapper contentValues = new ContentValuesWrapper();
+        objectConverter.convertObject(contentValues, object);
         try {
-            replace = dataBase.replace(tableName, null, contentValues) > 0;
+            replace = dataBase.replace(tableName, null, contentValues.getContentValues()) > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("replace", e);
         }
         helper.closeDatabase();
         return replace;
@@ -83,25 +84,26 @@ class SQLiteOperator {
         try {
             delete = dataBase.delete(tableName, whereClause, whereArgs);
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("delete", e);
         }
         helper.closeDatabase();
         return delete > 0;
     }
 
-    public static <T> T queryObject(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, CursorConverter<T> converter) {
+    public static <T> T queryObject(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
         T object = null;
         SQLiteDatabase dataBase = helper.openDatabase();
         Cursor cursor = null;
         try {
             cursor = dataBase.query(tableName, columns, selection, selectionArgs, null, null, null);
             if (cursor != null) {
+                CursorWrapper cursorWrapper = new CursorWrapper(cursor);
                 if (cursor.moveToFirst()) {
-                    object = converter.convertCursor(cursor);
+                    object = converter.convertCursor(cursorWrapper);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("queryObject", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -111,23 +113,24 @@ class SQLiteOperator {
         return object;
     }
 
-    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, CursorConverter<T> converter) {
+    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
         return queryList(helper, tableName, columns, selection, selectionArgs, null, null, null, converter);
     }
 
-    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, CursorConverter<T> converter) {
+    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectConverter<T> converter) {
         SQLiteDatabase dataBase = helper.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
         Cursor cursor = null;
         try {
             cursor = dataBase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
             if (cursor != null) {
+                CursorWrapper cursorWrapper = new CursorWrapper(cursor);
                 while (cursor.moveToNext()) {
-                    objects.add(converter.convertCursor(cursor));
+                    objects.add(converter.convertCursor(cursorWrapper));
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("queryList", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -141,9 +144,10 @@ class SQLiteOperator {
         SQLiteDatabase dataBase = helper.openDatabase();
         try {
             dataBase.execSQL(sql);
+            SQLite.log("execSQL=" + sql);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("execSQL", e);
         } finally {
             helper.closeDatabase();
         }
@@ -156,7 +160,7 @@ class SQLiteOperator {
             dataBase.execSQL(sql, bindArgs);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("execSQL", e);
         } finally {
             helper.closeDatabase();
         }
@@ -168,7 +172,7 @@ class SQLiteOperator {
         try {
             dataBase.execSQL("DROP TABLE IF EXISTS " + tableName);
         } catch (Exception e) {
-            e.printStackTrace();
+            SQLite.log("dropTable", e);
         } finally {
             helper.closeDatabase();
         }
@@ -187,7 +191,7 @@ class SQLiteOperator {
                     array.put(position, object);
                     position++;
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    SQLite.log("toJson", e);
                 }
             }
             cursor.close();
@@ -204,7 +208,7 @@ class SQLiteOperator {
                 object.put(cursor.getColumnName(i), cursor.getString(i));
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            SQLite.log("toJson", e);
         }
         return object;
     }
