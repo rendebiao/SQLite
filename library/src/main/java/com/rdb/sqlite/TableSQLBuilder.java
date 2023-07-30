@@ -24,12 +24,12 @@ public class TableSQLBuilder {
         return this;
     }
 
-    public TableSQLBuilder addPrimaryColumn(String name, String type, boolean autoIncrement) {
+    public TableSQLBuilder addPrimaryColumn(String name, DataType type, boolean autoIncrement) {
         primaryColumns.add(new Column(name, type, false, true, autoIncrement));
         return this;
     }
 
-    public TableSQLBuilder addColumn(String name, String type, boolean nullable) {
+    public TableSQLBuilder addColumn(String name, DataType type, boolean nullable) {
         columns.add(new Column(name, type, nullable, false, false));
         return this;
     }

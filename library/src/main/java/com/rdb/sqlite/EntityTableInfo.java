@@ -1,45 +1,67 @@
 package com.rdb.sqlite;
 
+import com.rdb.sqlite.annotation.EntityClass;
 import com.rdb.sqlite.annotation.EntityColumn;
-import com.rdb.sqlite.annotation.EntityVersion;
 
-@EntityVersion(value = 0)
-class EntityTableInfo extends Entity {
+import java.util.List;
 
-    @EntityColumn(hide = false, primary = true, nullable = false)
+@EntityClass(version = 0, autoCreateTable = true)
+class EntityTableInfo {
+
+    @EntityColumn(primary = true)
     private String tableName;
-    @EntityColumn(hide = false, primary = false, nullable = false)
+
     private int tableVersion;
-    @EntityColumn(hide = false, primary = false, nullable = false)
-    private String tableSqlString;
+
+    private boolean autoCreateTable;
+
+    private List<Column> columns;
 
     public EntityTableInfo() {
-
-    }
-
-    public EntityTableInfo(String tableName, int tableVersion, String tableSqlString) {
-        this.tableName = tableName;
-        this.tableVersion = tableVersion;
-        this.tableSqlString = tableSqlString;
     }
 
     public String getTableName() {
         return tableName;
     }
 
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
     public int getTableVersion() {
         return tableVersion;
     }
 
-    void setTableVersion(int tableVersion) {
+    public void setTableVersion(int tableVersion) {
         this.tableVersion = tableVersion;
     }
 
     public String getTableSqlString() {
-        return tableSqlString;
+        return Entity.getCreateTableSQL(tableName, columns);
     }
 
-    void setTableSqlString(String tableSqlString) {
-        this.tableSqlString = tableSqlString;
+    public boolean isAutoCreateTable() {
+        return autoCreateTable;
+    }
+
+    public void setAutoCreateTable(boolean autoCreateTable) {
+        this.autoCreateTable = autoCreateTable;
+    }
+
+    public List<Column> getColumns() {
+        return columns;
+    }
+
+    void setColumns(List<Column> columns) {
+        this.columns = columns;
+    }
+
+    Column getPrimaryColumn() {
+        for (Column column : columns) {
+            if (column.isPrimary()) {
+                return column;
+            }
+        }
+        return null;
     }
 }

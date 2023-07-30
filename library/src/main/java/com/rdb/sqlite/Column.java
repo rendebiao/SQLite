@@ -1,23 +1,24 @@
 package com.rdb.sqlite;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.StringDef;
 
-public class Column implements Comparable<Column> {
+import java.lang.reflect.Field;
 
-    public static final String REAL = "REAL";
-    public static final String TEXT = "TEXT";
-    public static final String BLOB = "BLOB";
-    public static final String INTEGER = "INTEGER";
+class Column implements Comparable<Column> {
+
     private final String name;
     private final String type;
     private final boolean nullable;
     private final boolean primary;
     private final boolean autoIncrement;
 
-    public Column(String name, String type, boolean nullable, boolean primary, boolean autoIncrement) {
+    public Column(Field field, boolean nullable, boolean primary, boolean autoIncrement) {
+        this(field.getName(), EntityConverter.getDataType(field), nullable, primary, autoIncrement);
+    }
+
+    public Column(String name, DataType type, boolean nullable, boolean primary, boolean autoIncrement) {
         this.name = name;
-        this.type = type;
+        this.type = type.type;
         this.nullable = nullable;
         this.primary = primary;
         this.autoIncrement = autoIncrement;
@@ -46,9 +47,5 @@ public class Column implements Comparable<Column> {
     @Override
     public int compareTo(@NonNull Column o) {
         return name.compareTo(o.name);
-    }
-
-    @StringDef({REAL, TEXT, BLOB, INTEGER})
-    public @interface Type {
     }
 }

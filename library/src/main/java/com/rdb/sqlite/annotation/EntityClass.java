@@ -7,12 +7,15 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EntityVersion {
+public @interface EntityClass {
 
     /**
      * 版本号
-     *
-     * @return
      */
-    int value() default 0;
+    int version() default 0;
+
+    /**
+     * 自动创建数据库
+     */
+    boolean autoCreateTable() default true;
 }

@@ -2,214 +2,260 @@ package com.rdb.sqlite;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-
-import com.rdb.sqlite.converter.ObjectConverter;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class SQLiteOperator {
 
-    public static boolean insert(SQLiteHelper helper, String tableName, ContentValues contentValues) {
-        boolean insert = false;
-        SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            insert = dataBase.insert(tableName, null, contentValues) > 0;
-        } catch (Exception e) {
-            SQLite.log("insert", e);
-        }
-        helper.closeDatabase();
-        return insert;
+    private static final String TAG = SQLiteOperator.class.getSimpleName();
+    private final SQLiteHelper helper;
+    private final EntityConverter converter;
+
+    public SQLiteOperator(SQLiteHelper helper, EntityConverter converter) {
+        this.helper = helper;
+        this.converter = converter;
     }
 
-    public static boolean replace(SQLiteHelper helper, String tableName, ContentValues contentValues) {
-        boolean replace = false;
+    public boolean insert(String tableName, ContentValues contentValues) {
         SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            replace = dataBase.replace(tableName, null, contentValues) > 0;
-        } catch (Exception e) {
-            SQLite.log("replace", e);
+        long insert = dataBase.insert(tableName, null, contentValues);
+        if (insert > 0) {
+            SQLite.d(TAG, "insert contentValues to " + tableName + " (" + insert + ") " + contentValues);
+        } else {
+            SQLite.e(TAG, "insert contentValues to " + tableName + " (" + insert + ") " + contentValues);
         }
         helper.closeDatabase();
-        return replace;
+        return insert > 0;
     }
 
-    public static boolean update(SQLiteHelper helper, String tableName, ContentValues values, String whereClause, String[] whereArgs) {
-        boolean update = false;
+    public boolean replace(String tableName, ContentValues contentValues) {
         SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            update = dataBase.update(tableName, values, whereClause, whereArgs) > 0;
-        } catch (Exception e) {
-            SQLite.log("update", e);
+        long replace = dataBase.replace(tableName, null, contentValues);
+        if (replace > 0) {
+            SQLite.d(TAG, "replace contentValues to " + tableName + " (" + replace + ") " + contentValues);
+        } else {
+            SQLite.e(TAG, "replace contentValues to " + tableName + " (" + replace + ") " + contentValues);
         }
         helper.closeDatabase();
-        return update;
+        return replace > 0;
     }
 
-    public static <T> boolean insert(SQLiteHelper helper, String tableName, T object, ObjectConverter<T> objectConverter) {
-        boolean insert = false;
+    public boolean update(String tableName, ContentValues contentValues, String whereClause, String[] whereArgs) {
         SQLiteDatabase dataBase = helper.openDatabase();
-        ContentValuesWrapper contentValues = new ContentValuesWrapper();
-        objectConverter.convertObject(contentValues, object);
-        try {
-            insert = dataBase.insert(tableName, null, contentValues.getContentValues()) > 0;
-        } catch (Exception e) {
-            SQLite.log("insert", e);
+        int update = dataBase.update(tableName, contentValues, whereClause, whereArgs);
+        if (update > 0) {
+            SQLite.d(TAG, "update contentValues to " + tableName + " (" + update + ") " + contentValues);
+        } else {
+            SQLite.e(TAG, "update contentValues to " + tableName + " (" + update + ") " + contentValues);
         }
         helper.closeDatabase();
-        return insert;
+        return update > 0;
     }
 
-    public static <T> boolean replace(SQLiteHelper helper, String tableName, T object, ObjectConverter<T> objectConverter) {
-        boolean replace = false;
+    public boolean delete(String tableName, String whereClause, String[] whereArgs) {
         SQLiteDatabase dataBase = helper.openDatabase();
-        ContentValuesWrapper contentValues = new ContentValuesWrapper();
-        objectConverter.convertObject(contentValues, object);
-        try {
-            replace = dataBase.replace(tableName, null, contentValues.getContentValues()) > 0;
-        } catch (Exception e) {
-            SQLite.log("replace", e);
-        }
-        helper.closeDatabase();
-        return replace;
-    }
-
-    public static boolean delete(SQLiteHelper helper, String tableName, String whereClause, String[] whereArgs) {
-        int delete = 0;
-        SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            delete = dataBase.delete(tableName, whereClause, whereArgs);
-        } catch (Exception e) {
-            SQLite.log("delete", e);
+        int delete = dataBase.delete(tableName, whereClause, whereArgs);
+        if (delete > 0) {
+            SQLite.d(TAG, "delete from " + tableName + " (" + delete + ") " + whereClause + " " + Arrays.toString(whereArgs));
+        } else {
+            SQLite.e(TAG, "delete from " + tableName + " (" + delete + ") " + whereClause + " " + Arrays.toString(whereArgs));
         }
         helper.closeDatabase();
         return delete > 0;
     }
 
-    public static <T> T queryObject(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
-        T object = null;
+    public <T> boolean insert(String tableName, T object) {
         SQLiteDatabase dataBase = helper.openDatabase();
-        Cursor cursor = null;
-        try {
-            cursor = dataBase.query(tableName, columns, selection, selectionArgs, null, null, null);
-            if (cursor != null) {
-                CursorWrapper cursorWrapper = new CursorWrapper(cursor);
-                if (cursor.moveToFirst()) {
-                    object = converter.convertCursor(cursorWrapper);
-                }
+        ValuesPutter valuesPutter = new ValuesPutter();
+        converter.convert(object, valuesPutter);
+        long insert = dataBase.insert(tableName, null, valuesPutter.getContentValues());
+        if (insert > 0) {
+            SQLite.d(TAG, "insert object to " + tableName + " (" + insert + ") " + valuesPutter.getContentValues());
+        } else {
+            SQLite.e(TAG, "insert object to " + tableName + " (" + insert + ") " + valuesPutter.getContentValues());
+        }
+        helper.closeDatabase();
+        return insert > 0;
+    }
+
+    public <T> boolean replace(String tableName, T object) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        ValuesPutter valuesPutter = new ValuesPutter();
+        converter.convert(object, valuesPutter);
+        long replace = dataBase.replace(tableName, null, valuesPutter.getContentValues());
+        if (replace > 0) {
+            SQLite.d(TAG, "replace object to " + tableName + " (" + replace + ") " + valuesPutter.getContentValues());
+        } else {
+            SQLite.e(TAG, "replace object to " + tableName + " (" + replace + ") " + valuesPutter.getContentValues());
+        }
+        helper.closeDatabase();
+        return replace > 0;
+    }
+
+    public void queryAll(String tableName, CursorReader cursorReader) {
+        query(tableName, null, "1=1", null, null, null, null, cursorReader);
+    }
+
+    public void query(String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, CursorReader cursorReader) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        Cursor cursor = dataBase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
+        cursorReader.onReadCursor(cursor);
+        if (cursor != null) {
+            cursor.close();
+        }
+        helper.closeDatabase();
+    }
+
+    public <T> T queryObject(String tableName, String selection, String[] selectionArgs, ObjectReader<T> objectReader) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        T object = null;
+        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, null, null, null);
+        if (cursor != null) {
+            ValuesGetter valuesGetter = new ValuesGetter(cursor);
+            if (cursor.moveToFirst()) {
+                object = objectReader.readColumn(cursor.getPosition(), valuesGetter);
             }
-        } catch (Exception e) {
-            SQLite.log("queryObject", e);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+            cursor.close();
         }
         helper.closeDatabase();
         return object;
     }
 
-    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, ObjectConverter<T> converter) {
-        return queryList(helper, tableName, columns, selection, selectionArgs, null, null, null, converter);
+    public <T> ArrayList<T> queryAll(String tableName, ObjectReader<T> objectReader) {
+        return queryList(tableName, "1=1", null, null, null, null, objectReader);
     }
 
-    public static <T> ArrayList<T> queryList(SQLiteHelper helper, String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectConverter<T> converter) {
+    public <T> ArrayList<T> queryList(String tableName, String selection, String[] selectionArgs, ObjectReader<T> objectReader) {
+        return queryList(tableName, selection, selectionArgs, null, null, null, objectReader);
+    }
+
+    public <T> ArrayList<T> queryList(String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
         SQLiteDatabase dataBase = helper.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
-        Cursor cursor = null;
-        try {
-            cursor = dataBase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
-            if (cursor != null) {
-                CursorWrapper cursorWrapper = new CursorWrapper(cursor);
-                while (cursor.moveToNext()) {
-                    objects.add(converter.convertCursor(cursorWrapper));
-                }
-            }
-        } catch (Exception e) {
-            SQLite.log("queryList", e);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        helper.closeDatabase();
-        return objects;
-    }
-
-    public static boolean execSQL(SQLiteHelper helper, String sql) {
-        SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            dataBase.execSQL(sql);
-            SQLite.log("execSQL=" + sql);
-            return true;
-        } catch (Exception e) {
-            SQLite.log("execSQL", e);
-        } finally {
-            helper.closeDatabase();
-        }
-        return false;
-    }
-
-    public static boolean execSQL(SQLiteHelper helper, String sql, Object[] bindArgs) {
-        SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            dataBase.execSQL(sql, bindArgs);
-            return true;
-        } catch (Exception e) {
-            SQLite.log("execSQL", e);
-        } finally {
-            helper.closeDatabase();
-        }
-        return false;
-    }
-
-    public static boolean dropTable(SQLiteHelper helper, String tableName) {
-        SQLiteDatabase dataBase = helper.openDatabase();
-        try {
-            dataBase.execSQL("DROP TABLE IF EXISTS " + tableName);
-        } catch (Exception e) {
-            SQLite.log("dropTable", e);
-        } finally {
-            helper.closeDatabase();
-        }
-        return false;
-    }
-
-    public static JSONArray toJson(SQLiteHelper helper, String tableName) {
-        JSONArray array = new JSONArray();
-        SQLiteDatabase dataBase = helper.openDatabase();
-        Cursor cursor = dataBase.query(tableName, null, "1 = 1", new String[]{}, null, null, null);
+        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
         if (cursor != null) {
-            int position = 0;
+            ValuesGetter valuesGetter = new ValuesGetter(cursor);
             while (cursor.moveToNext()) {
-                JSONObject object = toJson(cursor);
-                try {
-                    array.put(position, object);
-                    position++;
-                } catch (JSONException e) {
-                    SQLite.log("toJson", e);
+                T t = objectReader.readColumn(cursor.getPosition(), valuesGetter);
+                if (t != null) {
+                    objects.add(t);
                 }
             }
             cursor.close();
         }
         helper.closeDatabase();
-        return array;
+        return objects;
     }
 
-    public static JSONObject toJson(Cursor cursor) {
-        JSONObject object = new JSONObject();
-        int columnCount = cursor.getColumnCount();
-        try {
-            for (int i = 0; i < columnCount; i++) {
-                object.put(cursor.getColumnName(i), cursor.getString(i));
+    public <T> T queryObject(Class<T> tClass, String tableName, String selection, String[] selectionArgs) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        T object = null;
+        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, null, null, null);
+        if (cursor != null) {
+            ValuesGetter valuesGetter = new ValuesGetter(cursor);
+            if (cursor.moveToFirst()) {
+                object = Entity.newObject(tClass);
+                if (object != null) {
+                    converter.convert(object, valuesGetter);
+                }
             }
-        } catch (JSONException e) {
-            SQLite.log("toJson", e);
+            cursor.close();
         }
+        helper.closeDatabase();
         return object;
+    }
+
+    public <T> ArrayList<T> queryAll(Class<T> tClass, String tableName) {
+        return queryList(tClass, tableName, "1=1", null, null, null, null);
+    }
+
+    public <T> ArrayList<T> queryList(Class<T> tClass, String tableName, String selection, String[] selectionArgs) {
+        return queryList(tClass, tableName, selection, selectionArgs, null, null, null);
+    }
+
+    public <T> ArrayList<T> queryList(Class<T> tClass, String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        ArrayList<T> objects = new ArrayList<>();
+        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
+        if (cursor != null) {
+            T object = null;
+            ValuesGetter valuesGetter = new ValuesGetter(cursor);
+            while (cursor.moveToNext()) {
+                object = Entity.newObject(tClass);
+                if (object != null) {
+                    converter.convert(object, valuesGetter);
+                    objects.add(object);
+                }
+            }
+            cursor.close();
+        }
+        helper.closeDatabase();
+        return objects;
+    }
+
+    public boolean execSQL(String sql) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        try {
+            dataBase.execSQL(sql);
+            SQLite.d(TAG, "execSQL=" + sql);
+            return true;
+        } catch (SQLException e) {
+            SQLite.e(TAG, "execSQL", e);
+        } finally {
+            helper.closeDatabase();
+        }
+        return false;
+    }
+
+    public boolean execSQL(String sql, Object[] bindArgs) {
+        SQLiteDatabase dataBase = helper.openDatabase();
+        try {
+            dataBase.execSQL(sql, bindArgs);
+            SQLite.d(TAG, "execSQL=" + sql + " bindArgs=" + Arrays.toString(bindArgs));
+            return true;
+        } catch (SQLException e) {
+            SQLite.e(TAG, "execSQL", e);
+        } finally {
+            helper.closeDatabase();
+        }
+        return false;
+    }
+
+    public boolean alterTable(String tableName, String newTableName) {
+        if (!TextUtils.isEmpty(tableName) && !TextUtils.isEmpty(newTableName)) {
+            String sql = "ALTER TABLE " + tableName + " RENAME TO " + newTableName;
+            return execSQL(sql);
+        }
+        return false;
+    }
+
+    public boolean dropTable(String tableName) {
+        if (!TextUtils.isEmpty(tableName)) {
+            String sql = "DROP TABLE IF EXISTS " + tableName;
+            return execSQL(sql);
+        }
+        return false;
+    }
+
+    public boolean isTableExists(String tableName) {
+        boolean exists = false;
+        if (!TextUtils.isEmpty(tableName)) {
+            SQLiteDatabase dataBase = helper.openDatabase();
+            String sql = "SELECT name FROM sqlite_master WHERE type = 'table'";
+            Cursor cursor = dataBase.rawQuery(sql, null);
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(0);
+                if (tableName.equals(name)) {
+                    exists = true;
+                    break;
+                }
+            }
+            helper.closeDatabase();
+        }
+        return exists;
     }
 }

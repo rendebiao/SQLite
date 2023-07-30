@@ -2,23 +2,33 @@ package com.rdb.sqlite.demo;
 
 import androidx.annotation.NonNull;
 
+import com.rdb.sqlite.annotation.EntityClass;
 import com.rdb.sqlite.annotation.EntityColumn;
-import com.rdb.sqlite.annotation.EntityVersion;
 
-@EntityVersion(value = 1)
+import java.util.List;
+import java.util.Map;
+
+@EntityClass(version = 1, autoCreateTable = true)
 public class User {
 
-    @EntityColumn(hide = false, primary = true, nullable = false, autoIncrement = true)
+    @EntityColumn(primary = true, autoIncrement = true)
     public long id;
 
-    @EntityColumn(hide = false, primary = false, nullable = false)
     public String name;
 
-    @EntityColumn(hide = false, primary = false, nullable = false)
     public int age;
 
-    @EntityColumn(hide = false, primary = false, nullable = true)
+    @EntityColumn(nullable = true)
     public Address address;
+
+    @EntityColumn(nullable = true)
+    public List<Address> addresses1;
+
+    @EntityColumn(nullable = true)
+    public Map<String, Address> addresses2;
+
+    @EntityColumn(nullable = true)
+    public Address[] addresses3;
 
     public User() {
     }
