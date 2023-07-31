@@ -1,10 +1,9 @@
 package com.rdb.sqlite.demo;
 
 import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
-import com.rdb.sqlite.CursorReader;
 import com.rdb.sqlite.DataType;
 import com.rdb.sqlite.JsonConverter;
 import com.rdb.sqlite.ObjectReader;
@@ -27,8 +25,6 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,8 +52,7 @@ public class MainActivity extends AppCompatActivity {
         resultView = findViewById(R.id.resultView);
         SQLite.checkClass(User.class);
 
-        //Table
-        SQLite sqLite = new SQLite(this, "db", null, 1, null, new SQLiteLinstener() {
+        SQLiteOpenHelper openHelper = new SQLiteOpenHelper(this, "db", null, 1, null) {
             @Override
             public void onCreate(SQLiteDatabase db) {
                 String sql = new TableSQLBuilder("user").addPrimaryColumn("id", DataType.INTEGER, true).addColumn("name", DataType.TEXT, false).addColumn("age", DataType.INTEGER, false).addColumn("address", DataType.TEXT, false).build();
@@ -68,20 +63,10 @@ public class MainActivity extends AppCompatActivity {
             public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
             }
-
-            @Override
-            public void onTableAlterByUpgrade(Class tClass, Table alterTable) {
-                alterTable.queryAll(new CursorReader() {
-                    @Override
-                    public void onReadCursor(Cursor cursor) {
-                        if (cursor != null) {
-
-                        }
-                    }
-                });
-            }
-
-        }, new JsonConverter() {
+        };
+        //Table
+        SQLite sqLite = new SQLite(openHelper);
+        sqLite.init(new JsonConverter() {
             @Override
             public String toJson(Object object) {
                 return gson.toJson(object);
@@ -91,17 +76,20 @@ public class MainActivity extends AppCompatActivity {
             public <T> T fromJson(String json, Type typeOfT) {
                 return gson.fromJson(json, typeOfT);
             }
+        }, new SQLiteLinstener() {
+
+            @Override
+            public void onTableAlteredByClassChanged(Class tClass, Table alterTable) {
+                List<User0> user0s = alterTable.queryAll(User0.class);
+                Table table = sqLite.table(User.class);
+                for (User0 user0 : user0s) {
+                    table.insert(new User(user0));
+                }
+            }
+
         });
 
         final User user = new User(0, "name", 26, new Address("武汉市", "11111"));
-        user.addresses1 = new ArrayList<>();
-        user.addresses2 = new HashMap<>();
-        user.addresses3 = new Address[2];
-        user.addresses1.add(new Address("666", "9999"));
-        user.addresses2.put("a", new Address("777", "8888"));
-        user.addresses3[0] = new Address("888", "9999");
-        Log.d(getClass().getSimpleName(), "isTableExists user = " + sqLite.isTableExists("user"));
-        Log.d(getClass().getSimpleName(), "isTableExists user1 = " + sqLite.isTableExists("user1"));
         table1 = sqLite.table("user");
         table2 = sqLite.table(User.class);
         insertView1.setOnClickListener(new View.OnClickListener() {
@@ -160,6 +148,5 @@ public class MainActivity extends AppCompatActivity {
                 resultView.setText("SQLite:\n" + gson.toJson(result));
             }
         });
-
     }
 }

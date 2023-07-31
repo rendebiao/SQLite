@@ -1,12 +1,8 @@
 package com.rdb.sqlite;
 
-import android.content.Context;
-import android.database.DatabaseErrorHandler;
-import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,17 +11,16 @@ import java.util.Map;
 public class SQLite {
 
     private static final boolean debug = true;
-    private final SQLiteHelper helper;
+    private final SQLiteOpener sqLiteOpener;
     private final SQLiteOperator sqLiteOperator;
-    private final SQLiteLinstener sqLiteLinstener;
     private final Map<String, Table> tableMap = new HashMap<>();
     private final Map<Class, EntityTableInfo> tableInfoMap = new HashMap<>();
+    private SQLiteLinstener sqLiteLinstener;
     private Table tableInfoTable;
 
-    public SQLite(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler, SQLiteLinstener sqLiteLinstener, @NonNull JsonConverter jsonConverter) {
-        this.helper = new SQLiteHelper(context, name, factory, version, errorHandler, sqLiteLinstener);
-        this.sqLiteOperator = new SQLiteOperator(helper, new EntityConverter(jsonConverter));
-        this.sqLiteLinstener = sqLiteLinstener;
+    public SQLite(SQLiteOpenHelper openHelper) {
+        this.sqLiteOpener = new SQLiteOpener(openHelper);
+        this.sqLiteOperator = new SQLiteOperator(sqLiteOpener);
     }
 
     public static <T> void checkClass(Class<T> tClass) {
@@ -56,6 +51,11 @@ public class SQLite {
         return TextUtils.isEmpty(tag) ? "SQLite" : ("SQLite-" + tag);
     }
 
+    public void init(JsonConverter jsonConverter, SQLiteLinstener sqLiteLinstener) {
+        this.sqLiteLinstener = sqLiteLinstener;
+        this.sqLiteOperator.setConverter(new EntityConverter(jsonConverter));
+    }
+
     public boolean createTable(String sql) {
         return sqLiteOperator.execSQL(sql);
     }
@@ -78,8 +78,7 @@ public class SQLite {
     }
 
     public <T> Table table(Class<T> tClass) {
-        if (tClass == null) {
-            d(null, "table fail, tClass = null");
+        if (!Entity.checkClass(tClass)) {
             return null;
         }
         if (!tClass.equals(EntityTableInfo.class)) {
@@ -159,7 +158,7 @@ public class SQLite {
                             String newTableName = tableInfo.getTableName() + "_alter";
                             sqLiteOperator.alterTable(tableInfo.getTableName(), newTableName);
                             Table alterTable = new Table(sqLiteOperator, newTableName);
-                            sqLiteLinstener.onTableAlterByUpgrade(tClass, alterTable);
+                            sqLiteLinstener.onTableAlteredByClassChanged(tClass, alterTable);
                             dropTable(newTableName);
                         }
                         boolean delete = tableInfoTable.delete("? == ?", new String[]{"tableName", tableInfo.getTableName()});

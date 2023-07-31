@@ -1,7 +1,5 @@
 package com.rdb.sqlite;
 
-import androidx.annotation.NonNull;
-
 import java.lang.reflect.Field;
 
 class Column implements Comparable<Column> {
@@ -45,7 +43,7 @@ class Column implements Comparable<Column> {
     }
 
     @Override
-    public int compareTo(@NonNull Column o) {
-        return name.compareTo(o.name);
+    public int compareTo(Column o) {
+        return (o == null) ? 1 : name.compareTo(o.name);
     }
 }

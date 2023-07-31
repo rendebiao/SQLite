@@ -5,9 +5,6 @@ import androidx.annotation.NonNull;
 import com.rdb.sqlite.annotation.EntityClass;
 import com.rdb.sqlite.annotation.EntityColumn;
 
-import java.util.List;
-import java.util.Map;
-
 @EntityClass(version = 1, autoCreateTable = true)
 public class User {
 
@@ -21,15 +18,6 @@ public class User {
     @EntityColumn(nullable = true)
     public Address address;
 
-    @EntityColumn(nullable = true)
-    public List<Address> addresses1;
-
-    @EntityColumn(nullable = true)
-    public Map<String, Address> addresses2;
-
-    @EntityColumn(nullable = true)
-    public Address[] addresses3;
-
     public User() {
     }
 
@@ -38,6 +26,12 @@ public class User {
         this.name = name;
         this.age = age;
         this.address = address;
+    }
+
+    public User(User0 user0) {
+        this.id = user0.id;
+        this.name = user0.name;
+        this.age = user0.age;
     }
 
     @NonNull

@@ -1,7 +1,5 @@
 package com.rdb.sqlite;
 
-import androidx.annotation.NonNull;
-
 import com.rdb.sqlite.annotation.EntityColumn;
 
 import java.lang.reflect.Field;
@@ -35,7 +33,7 @@ class EntityConverter {
 
     private final JsonConverter jsonConverter;
 
-    public EntityConverter(@NonNull JsonConverter jsonConverter) {
+    public EntityConverter(JsonConverter jsonConverter) {
         this.jsonConverter = jsonConverter;
     }
 
@@ -44,7 +42,7 @@ class EntityConverter {
         return converter == null ? DataType.TEXT : converter.getDataType();
     }
 
-    public <T> void convert(T entity, @NonNull ValuesPutter valuesPutter) {
+    public <T> void convert(T entity, ValuesPutter valuesPutter) {
         if (entity != null) {
             Field[] fields = entity.getClass().getDeclaredFields();
             for (Field field : fields) {
@@ -74,7 +72,7 @@ class EntityConverter {
         }
     }
 
-    public <T> void convert(T entity, @NonNull ValuesGetter valuesGetter) {
+    public <T> void convert(T entity, ValuesGetter valuesGetter) {
         if (entity != null) {
             Field[] fields = entity.getClass().getDeclaredFields();
             for (Field field : fields) {
@@ -108,16 +106,15 @@ class EntityConverter {
     public interface FieldConverter<T> {
         FieldConverter<Byte> BYTE_CONVERTER = new FieldConverter<Byte>() {
             @Override
-            public Byte valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Byte valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getByte(fieldName, (byte) 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Byte fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Byte fieldValue) {
                 putter.putByte(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -125,16 +122,15 @@ class EntityConverter {
         };
         FieldConverter<Short> SHORT_CONVERTER = new FieldConverter<Short>() {
             @Override
-            public Short valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Short valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getShort(fieldName, (short) 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Short fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Short fieldValue) {
                 putter.putShort(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -142,16 +138,15 @@ class EntityConverter {
         };
         FieldConverter<Integer> INTEGER_CONVERTER = new FieldConverter<Integer>() {
             @Override
-            public Integer valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Integer valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getInt(fieldName, 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Integer fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Integer fieldValue) {
                 putter.putInt(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -159,16 +154,15 @@ class EntityConverter {
         };
         FieldConverter<Long> LONG_CONVERTER = new FieldConverter<Long>() {
             @Override
-            public Long valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Long valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getLong(fieldName, 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Long fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Long fieldValue) {
                 putter.putLong(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -176,16 +170,15 @@ class EntityConverter {
         };
         FieldConverter<Float> FLOAT_CONVERTER = new FieldConverter<Float>() {
             @Override
-            public Float valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Float valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getFloat(fieldName, (float) 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Float fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Float fieldValue) {
                 putter.putFloat(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.REAL;
@@ -193,16 +186,15 @@ class EntityConverter {
         };
         FieldConverter<Double> DOUBLE_CONVERTER = new FieldConverter<Double>() {
             @Override
-            public Double valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Double valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getDouble(fieldName, 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Double fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Double fieldValue) {
                 putter.putDouble(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.REAL;
@@ -210,16 +202,15 @@ class EntityConverter {
         };
         FieldConverter<Character> CHARACTER_CONVERTER = new FieldConverter<Character>() {
             @Override
-            public Character valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Character valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getChar(fieldName, (char) 0);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Character fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Character fieldValue) {
                 putter.putChar(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -227,16 +218,15 @@ class EntityConverter {
         };
         FieldConverter<Boolean> BOOLEAN_CONVERTER = new FieldConverter<Boolean>() {
             @Override
-            public Boolean valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public Boolean valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getBoolean(fieldName, false);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull Boolean fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, Boolean fieldValue) {
                 putter.putBoolean(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.INTEGER;
@@ -244,16 +234,15 @@ class EntityConverter {
         };
         FieldConverter<String> STRING_CONVERTER = new FieldConverter<String>() {
             @Override
-            public String valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName) {
+            public String valueToField(ValuesGetter getter, String fieldName) {
                 return getter.getString(fieldName, null);
             }
 
             @Override
-            public void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull String fieldValue) {
+            public void fieldToValue(ValuesPutter putter, String fieldName, String fieldValue) {
                 putter.putString(fieldName, fieldValue);
             }
 
-            @NonNull
             @Override
             public DataType getDataType() {
                 return DataType.TEXT;
@@ -261,11 +250,10 @@ class EntityConverter {
         };
 
 
-        T valueToField(@NonNull ValuesGetter getter, @NonNull String fieldName);
+        T valueToField(ValuesGetter getter, String fieldName);
 
-        void fieldToValue(@NonNull ValuesPutter putter, @NonNull String fieldName, @NonNull T fieldValue);
+        void fieldToValue(ValuesPutter putter, String fieldName, T fieldValue);
 
-        @NonNull
         DataType getDataType();
     }
 }

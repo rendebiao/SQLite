@@ -12,64 +12,67 @@ import java.util.Arrays;
 class SQLiteOperator {
 
     private static final String TAG = SQLiteOperator.class.getSimpleName();
-    private final SQLiteHelper helper;
-    private final EntityConverter converter;
+    private final SQLiteOpener opener;
+    private EntityConverter converter;
 
-    public SQLiteOperator(SQLiteHelper helper, EntityConverter converter) {
-        this.helper = helper;
+    public SQLiteOperator(SQLiteOpener opener) {
+        this.opener = opener;
+    }
+
+    public void setConverter(EntityConverter converter) {
         this.converter = converter;
     }
 
     public boolean insert(String tableName, ContentValues contentValues) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         long insert = dataBase.insert(tableName, null, contentValues);
         if (insert > 0) {
             SQLite.d(TAG, "insert contentValues to " + tableName + " (" + insert + ") " + contentValues);
         } else {
             SQLite.e(TAG, "insert contentValues to " + tableName + " (" + insert + ") " + contentValues);
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return insert > 0;
     }
 
     public boolean replace(String tableName, ContentValues contentValues) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         long replace = dataBase.replace(tableName, null, contentValues);
         if (replace > 0) {
             SQLite.d(TAG, "replace contentValues to " + tableName + " (" + replace + ") " + contentValues);
         } else {
             SQLite.e(TAG, "replace contentValues to " + tableName + " (" + replace + ") " + contentValues);
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return replace > 0;
     }
 
     public boolean update(String tableName, ContentValues contentValues, String whereClause, String[] whereArgs) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         int update = dataBase.update(tableName, contentValues, whereClause, whereArgs);
         if (update > 0) {
             SQLite.d(TAG, "update contentValues to " + tableName + " (" + update + ") " + contentValues);
         } else {
             SQLite.e(TAG, "update contentValues to " + tableName + " (" + update + ") " + contentValues);
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return update > 0;
     }
 
     public boolean delete(String tableName, String whereClause, String[] whereArgs) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         int delete = dataBase.delete(tableName, whereClause, whereArgs);
         if (delete > 0) {
             SQLite.d(TAG, "delete from " + tableName + " (" + delete + ") " + whereClause + " " + Arrays.toString(whereArgs));
         } else {
             SQLite.e(TAG, "delete from " + tableName + " (" + delete + ") " + whereClause + " " + Arrays.toString(whereArgs));
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return delete > 0;
     }
 
     public <T> boolean insert(String tableName, T object) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         ValuesPutter valuesPutter = new ValuesPutter();
         converter.convert(object, valuesPutter);
         long insert = dataBase.insert(tableName, null, valuesPutter.getContentValues());
@@ -78,12 +81,12 @@ class SQLiteOperator {
         } else {
             SQLite.e(TAG, "insert object to " + tableName + " (" + insert + ") " + valuesPutter.getContentValues());
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return insert > 0;
     }
 
     public <T> boolean replace(String tableName, T object) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         ValuesPutter valuesPutter = new ValuesPutter();
         converter.convert(object, valuesPutter);
         long replace = dataBase.replace(tableName, null, valuesPutter.getContentValues());
@@ -92,7 +95,7 @@ class SQLiteOperator {
         } else {
             SQLite.e(TAG, "replace object to " + tableName + " (" + replace + ") " + valuesPutter.getContentValues());
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return replace > 0;
     }
 
@@ -101,17 +104,17 @@ class SQLiteOperator {
     }
 
     public void query(String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, CursorReader cursorReader) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         Cursor cursor = dataBase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
         cursorReader.onReadCursor(cursor);
         if (cursor != null) {
             cursor.close();
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
     }
 
     public <T> T queryObject(String tableName, String selection, String[] selectionArgs, ObjectReader<T> objectReader) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         T object = null;
         Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, null, null, null);
         if (cursor != null) {
@@ -121,7 +124,7 @@ class SQLiteOperator {
             }
             cursor.close();
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return object;
     }
 
@@ -134,7 +137,7 @@ class SQLiteOperator {
     }
 
     public <T> ArrayList<T> queryList(String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
         Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
         if (cursor != null) {
@@ -147,12 +150,12 @@ class SQLiteOperator {
             }
             cursor.close();
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return objects;
     }
 
     public <T> T queryObject(Class<T> tClass, String tableName, String selection, String[] selectionArgs) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         T object = null;
         Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, null, null, null);
         if (cursor != null) {
@@ -165,7 +168,7 @@ class SQLiteOperator {
             }
             cursor.close();
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return object;
     }
 
@@ -178,7 +181,7 @@ class SQLiteOperator {
     }
 
     public <T> ArrayList<T> queryList(Class<T> tClass, String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
         Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
         if (cursor != null) {
@@ -193,12 +196,12 @@ class SQLiteOperator {
             }
             cursor.close();
         }
-        helper.closeDatabase();
+        opener.closeDatabase();
         return objects;
     }
 
     public boolean execSQL(String sql) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         try {
             dataBase.execSQL(sql);
             SQLite.d(TAG, "execSQL=" + sql);
@@ -206,13 +209,13 @@ class SQLiteOperator {
         } catch (SQLException e) {
             SQLite.e(TAG, "execSQL", e);
         } finally {
-            helper.closeDatabase();
+            opener.closeDatabase();
         }
         return false;
     }
 
     public boolean execSQL(String sql, Object[] bindArgs) {
-        SQLiteDatabase dataBase = helper.openDatabase();
+        SQLiteDatabase dataBase = opener.openDatabase();
         try {
             dataBase.execSQL(sql, bindArgs);
             SQLite.d(TAG, "execSQL=" + sql + " bindArgs=" + Arrays.toString(bindArgs));
@@ -220,7 +223,7 @@ class SQLiteOperator {
         } catch (SQLException e) {
             SQLite.e(TAG, "execSQL", e);
         } finally {
-            helper.closeDatabase();
+            opener.closeDatabase();
         }
         return false;
     }
@@ -244,7 +247,7 @@ class SQLiteOperator {
     public boolean isTableExists(String tableName) {
         boolean exists = false;
         if (!TextUtils.isEmpty(tableName)) {
-            SQLiteDatabase dataBase = helper.openDatabase();
+            SQLiteDatabase dataBase = opener.openDatabase();
             String sql = "SELECT name FROM sqlite_master WHERE type = 'table'";
             Cursor cursor = dataBase.rawQuery(sql, null);
             while (cursor.moveToNext()) {
@@ -254,7 +257,7 @@ class SQLiteOperator {
                     break;
                 }
             }
-            helper.closeDatabase();
+            opener.closeDatabase();
         }
         return exists;
     }
