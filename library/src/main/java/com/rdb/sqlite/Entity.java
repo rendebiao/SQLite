@@ -1,5 +1,7 @@
 package com.rdb.sqlite;
 
+import android.database.SQLException;
+
 import com.rdb.sqlite.annotation.EntityClass;
 import com.rdb.sqlite.annotation.EntityColumn;
 
@@ -20,44 +22,36 @@ class Entity {
         return tClass.getName().replace(".", "_");
     }
 
+    static String getClassName(String tableName) {
+        return tableName.replace("_", ".");
+    }
+
     static Class getClass(String tableName) {
         Class tClass = null;
         try {
-            tClass = Class.forName(tableName.replace("_", "."));
+            tClass = Class.forName(getClassName(tableName));
         } catch (ClassNotFoundException e) {
             SQLite.e(TAG, "getClass", e);
         }
         return tClass;
     }
 
-    static EntityTableInfo getEntityTableInfo(Class tClass) {
+    static TableInfo getEntityTableInfo(Class tClass) {
         EntityClass entityClass = (EntityClass) tClass.getAnnotation(EntityClass.class);
-        if (entityClass == null) {
-            return null;
-        }
-        EntityTableInfo tableInfo = new EntityTableInfo();
-        tableInfo.setTableName(getTableName(tClass));
-        tableInfo.setTableVersion(entityClass.version());
-        tableInfo.setAutoCreateTable(entityClass.autoCreateTable());
+        TableInfo tableInfo = new TableInfo();
+        tableInfo.setName(getTableName(tClass));
+        tableInfo.setVersion(entityClass == null ? 0 : entityClass.version());
         tableInfo.setColumns(getColumns(tClass, true));
         return tableInfo;
     }
 
-    static <T> boolean checkClass(Class<T> tClass) {
+    static <T> void checkClass(Class<T> tClass) {
         if (tClass == null) {
-            SQLite.e(TAG, "tClass is null");
-            return false;
+            throw new SQLException("class is null");
         }
 
         if (!haveEmptyConstructor(tClass)) {
-            SQLite.e(TAG, tClass + ": no empty constructor");
-            return false;
-        }
-
-        EntityClass entityClass = tClass.getAnnotation(EntityClass.class);
-        if (entityClass == null) {
-            SQLite.e(TAG, tClass + ": no EntityClass");
-            return false;
+            throw new SQLException(tClass + " has no empty constructor");
         }
 
         int count = 0;
@@ -74,12 +68,10 @@ class Entity {
         }
 
         if (count == 0) {
-            SQLite.e(TAG, tClass + ": no field");
-            return false;
+            throw new SQLException(tClass + " has no available fields");
         } else if (!hasPrimary) {
             SQLite.w(TAG, tClass + ": no primary key");
         }
-        return true;
     }
 
     static List<Column> getColumns(Class tClass, boolean sort) {
@@ -163,4 +155,6 @@ class Entity {
     static String getDropTableSQL(Class tClass) {
         return "DROP TABLE IF EXISTS " + getTableName(tClass);
     }
+
+
 }

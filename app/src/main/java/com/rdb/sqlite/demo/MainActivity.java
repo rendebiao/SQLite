@@ -79,11 +79,19 @@ public class MainActivity extends AppCompatActivity {
         }, new SQLiteLinstener() {
 
             @Override
-            public void onTableAlteredByClassChanged(Class tClass, Table alterTable) {
-                List<User0> user0s = alterTable.queryAll(User0.class);
-                Table table = sqLite.table(User.class);
-                for (User0 user0 : user0s) {
-                    table.insert(new User(user0));
+            public void onTableVersionChanged(Class tClass, int oldVersion, Table alterTable) {
+                if (oldVersion == 0) {
+                    List<User.User0> user0s = alterTable.queryAll(User.User0.class);
+                    Table table = sqLite.table(User.class);
+                    for (User.User0 user0 : user0s) {
+                        table.insert(new User(user0));
+                    }
+                } else if (oldVersion == 1) {
+                    List<User.User1> user1s = alterTable.queryAll(User.User1.class);
+                    Table table = sqLite.table(User.class);
+                    for (User.User1 user1 : user1s) {
+                        table.insert(new User(user1));
+                    }
                 }
             }
 

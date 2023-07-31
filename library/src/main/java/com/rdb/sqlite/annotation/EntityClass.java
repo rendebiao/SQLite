@@ -13,9 +13,4 @@ public @interface EntityClass {
      * 版本号
      */
     int version() default 0;
-
-    /**
-     * 自动创建数据库
-     */
-    boolean autoCreateTable() default true;
 }
