@@ -38,14 +38,6 @@ public final class Table {
         operator.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy, cursorReader);
     }
 
-    public <T> boolean insert(T object) {
-        return operator.insert(tableName, object);
-    }
-
-    public <T> boolean replace(T object) {
-        return operator.replace(tableName, object);
-    }
-
     public <T> T queryObject(String selection, String[] selectionArgs, ObjectReader<T> objectReader) {
         return operator.queryObject(tableName, selection, selectionArgs, objectReader);
     }
@@ -60,21 +52,5 @@ public final class Table {
 
     public <T> ArrayList<T> queryList(String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
         return operator.queryList(tableName, selection, selectionArgs, groupBy, having, orderBy, objectReader);
-    }
-
-    public <T> T queryObject(Class<T> tClass, String selection, String[] selectionArgs) {
-        return operator.queryObject(tClass, tableName, selection, selectionArgs);
-    }
-
-    public <T> ArrayList<T> queryAll(Class<T> tClass) {
-        return operator.queryAll(tClass, tableName);
-    }
-
-    public <T> ArrayList<T> queryList(Class<T> tClass, String selection, String[] selectionArgs) {
-        return operator.queryList(tClass, tableName, selection, selectionArgs);
-    }
-
-    public <T> ArrayList<T> queryList(Class<T> tClass, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
-        return operator.queryList(tClass, tableName, selection, selectionArgs, groupBy, having, orderBy);
     }
 }

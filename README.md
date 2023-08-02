@@ -1,11 +1,11 @@
 # SQLite
 
 SQLite封装
-1.初始化
+1.初级使用
+初始化：
 SQLiteOpenHelper openHelper = ...;//原生SQLiteOpenHelper实现
 SQLite sqLite = new SQLite(openHelper);//创建SQLite对象
 
-2.初级使用
 建表：
 String sql = new TableSQLBuilder("user").addPrimaryColumn("id", DataType.INTEGER, true).addColumn("name", DataType.TEXT, false).addColumn("age", DataType.INTEGER, false).addColumn("address", DataType.TEXT, false).build();
 db.execSQL(sql);
@@ -70,10 +70,11 @@ public class UserEntity {
     }
 }
 
-初始化:
+初始化：
+SQLiteOpenHelper openHelper = ...;//原生SQLiteOpenHelper实现
 HistoryEntity historyEntity = new HistoryEntity();//
 JsonConverter jsonConverter = ...;//类中复杂属性将通过转换成json存入数据库，需要json和对象互相转换的能力
-sqLite.init(historyEntity，jsonConverter);
+SQLite sqLite = new SQLite(openHelper, historyEntity, jsonConverter);//创建SQLite对象, jsonConverter必须设置
 
 获取表：
 Table table = sqLite.table(UserEntity.class);

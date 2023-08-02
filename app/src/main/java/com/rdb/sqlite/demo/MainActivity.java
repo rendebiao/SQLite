@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
 import com.rdb.sqlite.DataType;
+import com.rdb.sqlite.EntityTable;
 import com.rdb.sqlite.HistoryEntity;
 import com.rdb.sqlite.JsonConverter;
 import com.rdb.sqlite.ObjectReader;
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     TextView resultView;
 
     Table table1;
-    Table table2;
+    EntityTable table2;
 
     Gson gson = new Gson();
 
@@ -63,14 +64,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
-        //Table
-        SQLite sqLite = new SQLite(openHelper);
         HistoryEntity historyEntity = new HistoryEntity();
-        historyEntity.newHistoryClass(UserEntity.class)
-                .putClass(0, UserEntity.UserEntity0.class)
-                .putClass(1, UserEntity.UserEntity1.class);
+        historyEntity.newHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class).putClass(1, UserEntity.UserEntity1.class);
 
-        sqLite.init(historyEntity, new JsonConverter() {
+        //Table
+        SQLite sqLite = new SQLite(openHelper, historyEntity, new JsonConverter() {
             @Override
             public String toJson(Object object) {
                 return gson.toJson(object);
@@ -87,8 +85,8 @@ public class MainActivity extends AppCompatActivity {
         final User user1 = new User(0, "name", 26, new Address("武汉市", "11111"));
         final UserEntity user2 = new UserEntity(0, "name", 26, new Address("武汉市", "11111"));
 //        final UserEntity user2 = new UserEntity(0, "name", 26, new Address("武汉市", "11111"));
-        table1 = sqLite.table("user");
-        table2 = sqLite.table(UserEntity.class);
+        table1 = sqLite.getTable("user");
+        table2 = sqLite.getEntityTable(UserEntity.class);
         insertView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
