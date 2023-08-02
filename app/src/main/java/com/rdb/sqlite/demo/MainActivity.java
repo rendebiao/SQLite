@@ -12,10 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
 import com.rdb.sqlite.DataType;
+import com.rdb.sqlite.HistoryEntity;
 import com.rdb.sqlite.JsonConverter;
 import com.rdb.sqlite.ObjectReader;
 import com.rdb.sqlite.SQLite;
-import com.rdb.sqlite.SQLiteLinstener;
 import com.rdb.sqlite.Table;
 import com.rdb.sqlite.TableSQLBuilder;
 import com.rdb.sqlite.ValuesGetter;
@@ -50,12 +50,11 @@ public class MainActivity extends AppCompatActivity {
         insertView2 = findViewById(R.id.insertView2);
         queryView2 = findViewById(R.id.queryView2);
         resultView = findViewById(R.id.resultView);
-        SQLite.checkClass(User.class);
 
         SQLiteOpenHelper openHelper = new SQLiteOpenHelper(this, "db", null, 1, null) {
             @Override
             public void onCreate(SQLiteDatabase db) {
-                String sql = new TableSQLBuilder("user").addPrimaryColumn("id", DataType.INTEGER, true).addColumn("name", DataType.TEXT, false).addColumn("age", DataType.INTEGER, false).addColumn("address", DataType.TEXT, false).build();
+                String sql = new TableSQLBuilder("user").addPrimaryColumn("id", DataType.INTEGER, true).addColumn("name", DataType.TEXT, false).addColumn("age", DataType.INTEGER, false).addColumn("address", DataType.TEXT, true).build();
                 db.execSQL(sql);
             }
 
@@ -66,7 +65,12 @@ public class MainActivity extends AppCompatActivity {
         };
         //Table
         SQLite sqLite = new SQLite(openHelper);
-        sqLite.init(new JsonConverter() {
+        HistoryEntity historyEntity = new HistoryEntity();
+        historyEntity.newHistoryClass(UserEntity.class)
+                .putClass(0, UserEntity.UserEntity0.class)
+                .putClass(1, UserEntity.UserEntity1.class);
+
+        sqLite.init(historyEntity, new JsonConverter() {
             @Override
             public String toJson(Object object) {
                 return gson.toJson(object);
@@ -76,41 +80,26 @@ public class MainActivity extends AppCompatActivity {
             public <T> T fromJson(String json, Type typeOfT) {
                 return gson.fromJson(json, typeOfT);
             }
-        }, new SQLiteLinstener() {
-
-            @Override
-            public void onTableVersionChanged(Class tClass, int oldVersion, Table alterTable) {
-                if (oldVersion == 0) {
-                    List<User.User0> user0s = alterTable.queryAll(User.User0.class);
-                    Table table = sqLite.table(User.class);
-                    for (User.User0 user0 : user0s) {
-                        table.insert(new User(user0));
-                    }
-                } else if (oldVersion == 1) {
-                    List<User.User1> user1s = alterTable.queryAll(User.User1.class);
-                    Table table = sqLite.table(User.class);
-                    for (User.User1 user1 : user1s) {
-                        table.insert(new User(user1));
-                    }
-                }
-            }
-
         });
 
-        final User user = new User(0, "name", 26, new Address("武汉市", "11111"));
+        sqLite.checkClass(UserEntity.class);
+
+        final User user1 = new User(0, "name", 26, new Address("武汉市", "11111"));
+        final UserEntity user2 = new UserEntity(0, "name", 26, new Address("武汉市", "11111"));
+//        final UserEntity user2 = new UserEntity(0, "name", 26, new Address("武汉市", "11111"));
         table1 = sqLite.table("user");
-        table2 = sqLite.table(User.class);
+        table2 = sqLite.table(UserEntity.class);
         insertView1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ContentValues values = new ContentValues();
-                values.put("name", user.name);
-                values.put("age", user.age);
+                values.put("name", user1.name);
+                values.put("age", user1.age);
                 JSONStringer stringer = new JSONStringer();
                 try {
                     stringer.object();
-                    stringer.key("name").value(user.address.name);
-                    stringer.key("postalCode").value(user.address.postalCode);
+                    stringer.key("name").value(user1.address.name);
+                    stringer.key("postalCode").value(user1.address.postalCode);
                     stringer.endObject();
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
@@ -122,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         insertView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                table2.insert(user);
+                table2.insert(user2);
             }
         });
 
@@ -136,11 +125,13 @@ public class MainActivity extends AppCompatActivity {
                         user.id = valuesGetter.getLong("id", 0);
                         user.name = valuesGetter.getString("name", null);
                         user.age = valuesGetter.getInt("age", 0);
-                        JSONObject object = valuesGetter.getJSONObject("address", null);
-                        if (object != null) {
-                            user.address = new Address();
-                            user.address.name = object.optString("name");
-                            user.address.postalCode = object.optString("postalCode");
+                        if (!valuesGetter.isNull("address")) {
+                            JSONObject object = valuesGetter.getJSONObject("address", null);
+                            if (object != null) {
+                                user.address = new Address();
+                                user.address.name = object.optString("name");
+                                user.address.postalCode = object.optString("postalCode");
+                            }
                         }
                         return user;
                     }
@@ -152,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         queryView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<User> result = table2.queryAll(User.class);
+                List<UserEntity> result = table2.queryAll(UserEntity.class);
                 resultView.setText("SQLite:\n" + gson.toJson(result));
             }
         });

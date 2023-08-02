@@ -2,7 +2,7 @@ package com.rdb.sqlite;
 
 import android.database.SQLException;
 
-import com.rdb.sqlite.annotation.EntityClass;
+import com.rdb.sqlite.annotation.Entity;
 import com.rdb.sqlite.annotation.EntityColumn;
 
 import java.lang.reflect.Constructor;
@@ -14,12 +14,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-class Entity {
+class EntityUtil {
 
-    private static final String TAG = Entity.class.getSimpleName();
+    private static final String TAG = EntityUtil.class.getSimpleName();
 
-    static String getTableName(Class tClass) {
-        return tClass.getName().replace(".", "_");
+    static String getTableName(Class entityClass) {
+        return entityClass.getName().replace(".", "_");
     }
 
     static String getClassName(String tableName) {
@@ -27,36 +27,44 @@ class Entity {
     }
 
     static Class getClass(String tableName) {
-        Class tClass = null;
+        Class cls = null;
         try {
-            tClass = Class.forName(getClassName(tableName));
+            cls = Class.forName(getClassName(tableName));
         } catch (ClassNotFoundException e) {
             SQLite.e(TAG, "getClass", e);
         }
-        return tClass;
+        return cls;
     }
 
-    static TableInfo getEntityTableInfo(Class tClass) {
-        EntityClass entityClass = (EntityClass) tClass.getAnnotation(EntityClass.class);
+    static TableInfo getEntityTableInfo(Class entityClass) {
+        Entity entity = (Entity) entityClass.getAnnotation(Entity.class);
         TableInfo tableInfo = new TableInfo();
-        tableInfo.setName(getTableName(tClass));
-        tableInfo.setVersion(entityClass == null ? 0 : entityClass.version());
-        tableInfo.setColumns(getColumns(tClass, true));
+        tableInfo.setName(getTableName(entityClass));
+        tableInfo.setVersion(entity == null ? 0 : entity.version());
+        tableInfo.setColumns(getColumns(entityClass, true));
         return tableInfo;
     }
 
-    static <T> void checkClass(Class<T> tClass) {
-        if (tClass == null) {
+    static void checkClass(Class entityClass, Class[] historyClasses) {
+        if (entityClass == null) {
             throw new SQLException("class is null");
         }
 
-        if (!haveEmptyConstructor(tClass)) {
-            throw new SQLException(tClass + " has no empty constructor");
+        if (!haveEmptyConstructor(entityClass)) {
+            throw new SQLException(entityClass + " has no empty constructor");
+        }
+
+        if (historyClasses != null) {
+            for (Class cls : historyClasses) {
+                if (!haveEmptyConstructor(cls)) {
+                    throw new SQLException(cls + " has no empty constructor");
+                }
+            }
         }
 
         int count = 0;
         boolean hasPrimary = false;
-        Field[] fields = tClass.getDeclaredFields();
+        Field[] fields = entityClass.getDeclaredFields();
         for (Field field : fields) {
             if (!Modifier.isStatic(field.getModifiers())) {
                 Column column = getFieldColumn(field);
@@ -68,15 +76,15 @@ class Entity {
         }
 
         if (count == 0) {
-            throw new SQLException(tClass + " has no available fields");
+            throw new SQLException(entityClass + " has no available fields");
         } else if (!hasPrimary) {
-            SQLite.w(TAG, tClass + ": no primary key");
+            SQLite.w(TAG, entityClass + ": no primary key");
         }
     }
 
-    static List<Column> getColumns(Class tClass, boolean sort) {
+    static List<Column> getColumns(Class entityClass, boolean sort) {
         List<Column> columns = new ArrayList<>();
-        Field[] fields = tClass.getDeclaredFields();
+        Field[] fields = entityClass.getDeclaredFields();
         for (Field field : fields) {
             if (!Modifier.isStatic(field.getModifiers())) {
                 Column column = getFieldColumn(field);
@@ -108,17 +116,29 @@ class Entity {
         }
     }
 
-    static int getClassVersion(Class tClass) {
-        EntityClass entityClass = (EntityClass) tClass.getAnnotation(EntityClass.class);
-        return entityClass == null ? 0 : entityClass.version();
+    static int getClassVersion(Class entityClass) {
+        Entity entity = (Entity) entityClass.getAnnotation(Entity.class);
+        return entity == null ? 0 : entity.version();
     }
 
-    static boolean haveEmptyConstructor(Class tClass) {
+    static boolean haveEmptyConstructor(Class entityClass) {
         try {
-            tClass.getConstructor();
+            entityClass.getConstructor();
             return true;
         } catch (NoSuchMethodException e) {
             SQLite.e(TAG, "hasEmptyConstructor", e);
+        }
+        return false;
+    }
+
+    static boolean isImplementsInterface(Class cls, Class inteface) {
+        if (cls != null) {
+            Class[] interfaces = cls.getInterfaces();
+            for (Class in : interfaces) {
+                if (in == inteface) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -139,8 +159,8 @@ class Entity {
         return null;
     }
 
-    static String getCreateTableSQL(Class tClass, String tableName) {
-        List<Column> columns = getColumns(tClass, true);
+    static String getCreateTableSQL(Class entityClass, String tableName) {
+        List<Column> columns = getColumns(entityClass, true);
         return getCreateTableSQL(tableName, columns);
     }
 
@@ -152,9 +172,7 @@ class Entity {
         return builder.build();
     }
 
-    static String getDropTableSQL(Class tClass) {
-        return "DROP TABLE IF EXISTS " + getTableName(tClass);
+    static String getDropTableSQL(Class entityClass) {
+        return "DROP TABLE IF EXISTS " + getTableName(entityClass);
     }
-
-
 }

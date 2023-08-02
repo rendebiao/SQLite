@@ -16,16 +16,12 @@ public class SQLite {
     private final SQLiteOperator sqLiteOperator;
     private final Map<String, Table> tableMap = new HashMap<>();
     private final Map<Class, TableInfo> tableInfoMap = new HashMap<>();
-    private SQLiteLinstener sqLiteLinstener;
     private Table tableInfoTable;
+    private HistoryEntity historyEntity;
 
     public SQLite(SQLiteOpenHelper openHelper) {
         this.sqLiteOpener = new SQLiteOpener(openHelper);
         this.sqLiteOperator = new SQLiteOperator(sqLiteOpener);
-    }
-
-    public static <T> void checkClass(Class<T> tClass) {
-        Entity.checkClass(tClass);
     }
 
     static void d(String tag, String msg) {
@@ -52,10 +48,14 @@ public class SQLite {
         return TextUtils.isEmpty(tag) ? "SQLite" : ("SQLite-" + tag);
     }
 
-    public void init(JsonConverter jsonConverter, SQLiteLinstener sqLiteLinstener) {
-        this.sqLiteLinstener = sqLiteLinstener;
+    public void init(HistoryEntity historyEntity, JsonConverter jsonConverter) {
+        this.historyEntity = historyEntity;
         this.sqLiteOperator.setConverter(new EntityConverter(jsonConverter));
         initTableInfoTable();
+    }
+
+    public void checkClass(Class entityClass) {
+        EntityUtil.checkClass(entityClass, historyEntity.getHistoryClasses(entityClass));
     }
 
     public boolean createTable(String sql) {
@@ -79,27 +79,28 @@ public class SQLite {
         return sqLiteOperator.dropTable(tableName);
     }
 
-    public <T> Table table(Class<T> tClass) {
+    public Table table(Class entityClass) {
         try {
-            Entity.checkClass(tClass);
+            checkClass(entityClass);
         } catch (Exception e) {
             e(null, "checClass fail", e);
+            return null;
         }
-        String tableName = Entity.getTableName(tClass);
-        Table table = tableMap.get(tClass);
+        String tableName = EntityUtil.getTableName(entityClass);
+        Table table = tableMap.get(entityClass);
         if (table == null) {
-            TableInfo tableInfo = tableInfoMap.get(tClass);
+            TableInfo tableInfo = tableInfoMap.get(entityClass);
             if (tableInfo == null) {
-                tableInfo = Entity.getEntityTableInfo(tClass);
+                tableInfo = EntityUtil.getEntityTableInfo(entityClass);
                 if (tableInfo == null) {
                     d(null, "table fail, tableInfo = null");
                     return null;
                 }
-                if (!tClass.equals(TableInfo.class)) {
+                sqLiteOperator.execSQL(tableInfo.getTableSqlString());
+                if (!entityClass.equals(TableInfo.class)) {
                     tableInfoTable.replace(tableInfo);
                 }
-                tableInfoMap.put(tClass, tableInfo);
-                sqLiteOperator.execSQL(tableInfo.getTableSqlString());
+                tableInfoMap.put(entityClass, tableInfo);
             }
             table = new Table(sqLiteOperator, tableName);
             tableMap.put(tableName, table);
@@ -107,18 +108,18 @@ public class SQLite {
         return table;
     }
 
-    public synchronized void dropTable(Class tClass) {
-        if (tClass != null && !tClass.equals(TableInfo.class)) {
-            String tableName = Entity.getTableName(tClass);
-            tableInfoTable.delete("tableName = ?", new String[]{tableName});
-            tableInfoMap.remove(tClass);
+    public synchronized void dropTable(Class entityClass) {
+        if (entityClass != null && !entityClass.equals(TableInfo.class)) {
+            String tableName = EntityUtil.getTableName(entityClass);
+            tableInfoTable.delete("name = ?", new String[]{tableName});
+            tableInfoMap.remove(entityClass);
             sqLiteOperator.dropTable(tableName);
         }
     }
 
-    public int getTableVersion(Class tClass) {
-        if (tableInfoMap.containsKey(tClass)) {
-            return tableInfoMap.get(tClass).getVersion();
+    public int getTableVersion(Class entityClass) {
+        if (tableInfoMap.containsKey(entityClass)) {
+            return tableInfoMap.get(entityClass).getVersion();
         }
         return -1;
     }
@@ -133,37 +134,43 @@ public class SQLite {
             tableInfoTable = table(TableInfo.class);
             List<TableInfo> tableInfoList = tableInfoTable.queryList(TableInfo.class, "1 = 1", new String[]{}, null, null, null);
             for (TableInfo tableInfo : tableInfoList) {
-                Class tClass = Entity.getClass(tableInfo.getName());
-                if (tClass == null) {
-                    String className = Entity.getClassName(tableInfo.getName());
+                Class entityClass = EntityUtil.getClass(tableInfo.getName());
+                if (entityClass == null) {
+                    String className = EntityUtil.getClassName(tableInfo.getName());
                     d(null, "unfound class " + className);
                     continue;
                 }
-                Entity.checkClass(tClass);
-                int classVersion = Entity.getClassVersion(tClass);
-                String createTableSql = Entity.getCreateTableSQL(tClass, tableInfo.getName());
-                boolean dropTable = false;
+                checkClass(entityClass);
+                int classVersion = EntityUtil.getClassVersion(entityClass);
+                String createTableSql = EntityUtil.getCreateTableSQL(entityClass, tableInfo.getName());
                 if (classVersion != tableInfo.getVersion()) {
-                    d(null, "class " + tClass.getName() + " version changed: " + tableInfo.getVersion() + " to " + classVersion);
-                    dropTable = true;
-                } else if (!TextUtils.equals(createTableSql, tableInfo.getTableSqlString())) {
-                    throw new SQLException("class " + tClass.getName() + " is changed, but version is not changed");
-                }
-                if (dropTable) {
-                    if (sqLiteLinstener == null) {
-                        dropTable(tableInfo.getName());
-                    } else {
-                        String newTableName = tableInfo.getName() + "_alter";
+                    Class historyClass = historyEntity.getHistoryClass(entityClass, tableInfo.getVersion());
+                    boolean supportHistory = EntityUtil.isImplementsInterface(historyClass, HistoryConverter.class);
+                    d(null, entityClass.getName() + " version: " + tableInfo.getVersion() + " to " + classVersion + ", supportHistory = " + supportHistory + ", historyClass = " + historyClass);
+                    if (supportHistory) {
+                        d(null, historyClass + " convert to " + entityClass);
+                        String newTableName = EntityUtil.getTableName(historyClass);
                         sqLiteOperator.alterTable(tableInfo.getName(), newTableName);
-                        Table alterTable = new Table(sqLiteOperator, newTableName);
-                        sqLiteLinstener.onTableVersionChanged(tClass, tableInfo.getVersion(), alterTable);
-                        dropTable(newTableName);
+                        tableInfoMap.remove(entityClass);
+                        Table table = table(entityClass);
+                        Table alterTable = table(historyClass);
+                        List<HistoryConverter> list = alterTable.queryAll(historyClass);
+                        for (HistoryConverter converter : list) {
+                            Object entity = converter.toCurrent();
+                            d(null, converter + " convert to " + entity);
+                            if (entity != null && entity.getClass() == entityClass) {
+                                table.insert(entity);
+                            }
+                        }
                     }
+                    dropTable(historyClass);
                     boolean delete = tableInfoTable.delete("? == ?", new String[]{"tableName", tableInfo.getName()});
                     d(null, "table " + tableInfo.getName() + " is delete");
-                } else {
-                    tableInfoMap.put(tClass, tableInfo);
+                    return;
+                } else if (!TextUtils.equals(createTableSql, tableInfo.getTableSqlString())) {
+                    throw new SQLException("class " + entityClass.getName() + " is changed, but version is not changed");
                 }
+                tableInfoMap.put(entityClass, tableInfo);
             }
         }
     }

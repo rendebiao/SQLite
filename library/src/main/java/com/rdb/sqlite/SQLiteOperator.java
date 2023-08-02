@@ -161,7 +161,7 @@ class SQLiteOperator {
         if (cursor != null) {
             ValuesGetter valuesGetter = new ValuesGetter(cursor);
             if (cursor.moveToFirst()) {
-                object = Entity.newObject(tClass);
+                object = EntityUtil.newObject(tClass);
                 if (object != null) {
                     converter.convert(object, valuesGetter);
                 }
@@ -188,7 +188,7 @@ class SQLiteOperator {
             T object = null;
             ValuesGetter valuesGetter = new ValuesGetter(cursor);
             while (cursor.moveToNext()) {
-                object = Entity.newObject(tClass);
+                object = EntityUtil.newObject(tClass);
                 if (object != null) {
                     converter.convert(object, valuesGetter);
                     objects.add(object);

@@ -1,11 +1,11 @@
 package com.rdb.sqlite;
 
-import com.rdb.sqlite.annotation.EntityClass;
+import com.rdb.sqlite.annotation.Entity;
 import com.rdb.sqlite.annotation.EntityColumn;
 
 import java.util.List;
 
-@EntityClass(version = 0)
+@Entity(version = 0)
 class TableInfo {
 
     @EntityColumn(primary = true)
@@ -35,7 +35,7 @@ class TableInfo {
     }
 
     public String getTableSqlString() {
-        return Entity.getCreateTableSQL(name, columns);
+        return EntityUtil.getCreateTableSQL(name, columns);
     }
 
     public List<Column> getColumns() {

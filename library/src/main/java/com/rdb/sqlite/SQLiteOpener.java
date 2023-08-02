@@ -10,6 +10,7 @@ class SQLiteOpener {
     private static final String TAG = SQLiteOpener.class.getSimpleName();
     private final SQLiteOpenHelper openHelper;
     private final AtomicInteger atomicInteger = new AtomicInteger();
+    private long openCount;
     private SQLiteDatabase dataBase;
 
     public SQLiteOpener(SQLiteOpenHelper openHelper) {
@@ -22,7 +23,7 @@ class SQLiteOpener {
         } else if (atomicInteger.incrementAndGet() == 1) {
             dataBase = openHelper.getWritableDatabase();
         }
-        SQLite.e(TAG, "openDatabase " + atomicInteger.get());
+        openCount++;
         return dataBase;
     }
 
@@ -33,6 +34,6 @@ class SQLiteOpener {
                 dataBase = null;
             }
         }
-        SQLite.d(TAG, "closeDatabase " + atomicInteger.get());
+        SQLite.d(TAG, "openCount = " + openCount + " atomicInteger = " + atomicInteger.get());
     }
 }
