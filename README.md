@@ -17,7 +17,7 @@ SQLite封装
     db.execSQL(sql);
 
     获取表：
-    Table table = sqLite.table("user");
+    Table table = sqLite.getTable("user");
 
     插入数据：
     ContentValues values = new ContentValues();
@@ -56,9 +56,9 @@ SQLite封装
 2.高级使用
 
     注解：
-    给实体类添加注解，EntityClass注解实体类，EntityColumn注解属性，根据注解会自动创建对应表。
+    给实体类添加注解，Entity注解实体类，EntityColumn注解属性，根据注解会自动创建对应表。
 
-    @EntityClass(version = 0, autoCreateTable = true)//版本为0，自动创建表
+    @Entity(version = 0)//版本为0可不加注解
     public class User {
 
         @EntityColumn(primary = true, autoIncrement = true)//主键 自增
@@ -80,16 +80,13 @@ SQLite封装
 
     初始化：
     SQLiteOpenHelper openHelper = ...;//原生SQLiteOpenHelper实现
-    HistoryEntity historyEntity = new HistoryEntity();历史实体类
+    HistoryEntity historyEntity = new HistoryEntity();//历史实体类
     historyEntity.newHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class).putClass(1, UserEntity.UserEntity1.class);//给实体类设置历史类 用于历史数据升级
     JsonConverter jsonConverter = ...;//类中复杂属性将通过转换成json存入数据库，需要json和对象互相转换的能力
     SQLite sqLite = new SQLite(openHelper, historyEntity, jsonConverter);//创建SQLite对象, jsonConverter必须设置
 
-    创建表：
-    如已注解autoCreateTable = true，不需要手动建表，否则同初级使用中方法建表。
-
     获取表：
-    Table table = sqLite.table(User.class);
+    EntityTable table = sqLite.getEntityTable(User.class);
 
     插入数据：
     table.insert(user);
