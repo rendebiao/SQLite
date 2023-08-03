@@ -99,13 +99,9 @@ class SQLiteOperator {
         return replace > 0;
     }
 
-    public void queryAll(String tableName, CursorReader cursorReader) {
-        query(tableName, null, "1=1", null, null, null, null, cursorReader);
-    }
-
-    public void query(String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, CursorReader cursorReader) {
+    public void query(boolean distinct, String tableName, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, CursorReader cursorReader) {
         SQLiteDatabase dataBase = opener.openDatabase();
-        Cursor cursor = dataBase.query(tableName, columns, selection, selectionArgs, groupBy, having, orderBy);
+        Cursor cursor = dataBase.query(distinct, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
         cursorReader.onReadCursor(cursor);
         if (cursor != null) {
             cursor.close();
@@ -128,18 +124,10 @@ class SQLiteOperator {
         return object;
     }
 
-    public <T> ArrayList<T> queryAll(String tableName, ObjectReader<T> objectReader) {
-        return queryList(tableName, "1=1", null, null, null, null, objectReader);
-    }
-
-    public <T> ArrayList<T> queryList(String tableName, String selection, String[] selectionArgs, ObjectReader<T> objectReader) {
-        return queryList(tableName, selection, selectionArgs, null, null, null, objectReader);
-    }
-
-    public <T> ArrayList<T> queryList(String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
+    public <T> ArrayList<T> queryList(boolean distinct, String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, ObjectReader<T> objectReader) {
         SQLiteDatabase dataBase = opener.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
-        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
+        Cursor cursor = dataBase.query(distinct, tableName, null, selection, selectionArgs, groupBy, having, orderBy, limit);
         if (cursor != null) {
             ValuesGetter valuesGetter = new ValuesGetter(cursor);
             while (cursor.moveToNext()) {
@@ -172,18 +160,10 @@ class SQLiteOperator {
         return object;
     }
 
-    public <T> ArrayList<T> queryAll(Class<T> tClass, String tableName) {
-        return queryList(tClass, tableName, "1=1", null, null, null, null);
-    }
-
-    public <T> ArrayList<T> queryList(Class<T> tClass, String tableName, String selection, String[] selectionArgs) {
-        return queryList(tClass, tableName, selection, selectionArgs, null, null, null);
-    }
-
-    public <T> ArrayList<T> queryList(Class<T> tClass, String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
+    public <T> ArrayList<T> queryList(Class<T> tClass, boolean distinct, String tableName, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
         SQLiteDatabase dataBase = opener.openDatabase();
         ArrayList<T> objects = new ArrayList<>();
-        Cursor cursor = dataBase.query(tableName, null, selection, selectionArgs, groupBy, having, orderBy);
+        Cursor cursor = dataBase.query(distinct, tableName, null, selection, selectionArgs, groupBy, having, orderBy, limit);
         if (cursor != null) {
             T object = null;
             ValuesGetter valuesGetter = new ValuesGetter(cursor);

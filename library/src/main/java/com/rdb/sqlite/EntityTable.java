@@ -29,14 +29,27 @@ public final class EntityTable {
     }
 
     public <T> ArrayList<T> queryAll(Class<T> tClass) {
-        return operator.queryAll(tClass, tableName);
+        return operator.queryList(tClass, false, tableName, "1=1", null, null, null, null, null);
+    }
+
+
+    public <T> ArrayList<T> queryAll(Class<T> tClass, String orderBy, String limit) {
+        return operator.queryList(tClass, false, tableName, "1=1", null, null, null, orderBy, limit);
     }
 
     public <T> ArrayList<T> queryList(Class<T> tClass, String selection, String[] selectionArgs) {
-        return operator.queryList(tClass, tableName, selection, selectionArgs);
+        return operator.queryList(tClass, false, tableName, selection, selectionArgs, null, null, null, null);
     }
 
     public <T> ArrayList<T> queryList(Class<T> tClass, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
-        return operator.queryList(tClass, tableName, selection, selectionArgs, groupBy, having, orderBy);
+        return operator.queryList(tClass, false, tableName, selection, selectionArgs, groupBy, having, orderBy, null);
+    }
+
+    public <T> ArrayList<T> queryList(Class<T> tClass, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+        return operator.queryList(tClass, false, tableName, selection, selectionArgs, groupBy, having, orderBy, limit);
+    }
+
+    public <T> ArrayList<T> queryList(Class<T> tClass, boolean distinct, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+        return operator.queryList(tClass, distinct, tableName, selection, selectionArgs, groupBy, having, orderBy, limit);
     }
 }
