@@ -1,6 +1,7 @@
 package com.rdb.sqlite;
 
 import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -19,7 +20,7 @@ public class SQLite {
     private final Map<Class, EntityTable> entityTableMap = new HashMap<>();
     private final Map<Class, TableInfo> tableInfoMap = new HashMap<>();
     private final HistoryEntity historyEntity;
-    private EntityTable tableInfoTable;
+    private EntityTable<TableInfo> tableInfoTable;
 
     public SQLite(SQLiteOpenHelper openHelper) {
         this(openHelper, null, null);
@@ -97,7 +98,7 @@ public class SQLite {
         return sqLiteOperator.execSQL(sql, bindArgs);
     }
 
-    public EntityTable getEntityTable(Class entityClass) {
+    public <T> EntityTable<T> getEntityTable(Class<T> entityClass) {
         checkSupport();
         checkClass(entityClass);
         String tableName = EntityUtil.getTableName(entityClass);
@@ -112,7 +113,7 @@ public class SQLite {
                 }
                 tableInfoMap.put(entityClass, tableInfo);
             }
-            table = new EntityTable(sqLiteOperator, tableName);
+            table = new EntityTable(sqLiteOperator, entityClass, tableName);
             entityTableMap.put(entityClass, table);
         }
         return table;
@@ -137,7 +138,7 @@ public class SQLite {
     private void initTableInfoTable() {
         SQLite.d(null, "initTableInfoTable");
         tableInfoTable = getEntityTable(TableInfo.class);
-        List<TableInfo> tableInfoList = tableInfoTable.queryList(TableInfo.class, "1 = 1", new String[]{}, null, null, null);
+        List<TableInfo> tableInfoList = tableInfoTable.queryList("1 = 1", new String[]{}, null, null, null);
         for (TableInfo tableInfo : tableInfoList) {
             Class entityClass = EntityUtil.getClass(tableInfo.getName());
             if (entityClass == null) {
@@ -159,7 +160,7 @@ public class SQLite {
                     tableInfoMap.remove(entityClass);
                     EntityTable table = getEntityTable(entityClass);
                     EntityTable alterTable = getEntityTable(historyClass);
-                    List<HistoryConverter> list = alterTable.queryAll(historyClass);
+                    List<HistoryConverter> list = alterTable.queryAll();
                     for (HistoryConverter converter : list) {
                         Object entity = converter.toCurrent();
                         d(null, converter + " convert to " + entity);
@@ -185,5 +186,19 @@ public class SQLite {
         if (!supportEntity) {
             throw new RuntimeException("getEntityTable fail, unset JsonConverter");
         }
+    }
+
+    public <T> T execSQLiteTask(SQLiteTask<T> task) {
+        if (task != null) {
+            SQLiteDatabase dataBase = sqLiteOpener.openDatabase();
+            try {
+                task.onTaskRun(dataBase);
+            } catch (Exception e) {
+                e(null, "execSQLiteTask", e);
+            } finally {
+                sqLiteOpener.closeDatabase();
+            }
+        }
+        return null;
     }
 }

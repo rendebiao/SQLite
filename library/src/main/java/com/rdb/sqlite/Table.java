@@ -46,10 +46,6 @@ public final class Table {
         operator.query(false, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, null, cursorReader);
     }
 
-    public void query(String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, CursorReader cursorReader) {
-        operator.query(false, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, limit, cursorReader);
-    }
-
     public void query(boolean distinct, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, CursorReader cursorReader) {
         operator.query(distinct, tableName, columns, selection, selectionArgs, groupBy, having, orderBy, limit, cursorReader);
     }
@@ -72,10 +68,6 @@ public final class Table {
 
     public <T> ArrayList<T> queryList(String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
         return operator.queryList(false, tableName, selection, selectionArgs, null, null, null, null, objectReader);
-    }
-
-    public <T> ArrayList<T> queryList(String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, ObjectReader<T> objectReader) {
-        return operator.queryList(false, tableName, selection, selectionArgs, null, null, null, limit, objectReader);
     }
 
     public <T> ArrayList<T> queryList(boolean distinct, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, ObjectReader<T> objectReader) {

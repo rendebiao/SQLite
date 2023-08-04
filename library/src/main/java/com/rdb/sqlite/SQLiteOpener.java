@@ -2,6 +2,7 @@ package com.rdb.sqlite;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Handler;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,6 +13,16 @@ class SQLiteOpener {
     private final AtomicInteger atomicInteger = new AtomicInteger();
     private long openCount;
     private SQLiteDatabase dataBase;
+    private final Handler handler = new Handler();
+    private final Runnable closeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (atomicInteger.decrementAndGet() == 0) {
+                dataBase.close();
+                dataBase = null;
+            }
+        }
+    };
 
     public SQLiteOpener(SQLiteOpenHelper openHelper) {
         this.openHelper = openHelper;
@@ -35,5 +46,19 @@ class SQLiteOpener {
             }
         }
         SQLite.d(TAG, "openCount = " + openCount + " atomicInteger = " + atomicInteger.get());
+    }
+
+    public <T> T execSQLiteTask(SQLiteTask<T> task) {
+        if (task != null) {
+            SQLiteDatabase dataBase = openDatabase();
+            try {
+                task.onTaskRun(dataBase);
+            } catch (Exception e) {
+                SQLite.e(null, "execSQLiteTask", e);
+            } finally {
+                closeDatabase();
+            }
+        }
+        return null;
     }
 }
