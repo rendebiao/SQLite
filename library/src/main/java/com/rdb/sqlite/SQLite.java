@@ -1,7 +1,6 @@
 package com.rdb.sqlite;
 
 import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,7 +13,6 @@ public class SQLite {
 
     private static final boolean debug = true;
     private final boolean supportEntity;
-    private final SQLiteOpener sqLiteOpener;
     private final SQLiteOperator sqLiteOperator;
     private final Map<String, Table> tableMap = new HashMap<>();
     private final Map<Class, EntityTable> entityTableMap = new HashMap<>();
@@ -27,8 +25,7 @@ public class SQLite {
     }
 
     public SQLite(SQLiteOpenHelper openHelper, HistoryEntity historyEntity, JsonConverter jsonConverter) {
-        this.sqLiteOpener = new SQLiteOpener(openHelper);
-        this.sqLiteOperator = new SQLiteOperator(sqLiteOpener);
+        this.sqLiteOperator = new SQLiteOperator(openHelper);
         this.historyEntity = historyEntity;
         this.sqLiteOperator.setConverter(new EntityConverter(jsonConverter));
         supportEntity = jsonConverter != null;
@@ -189,16 +186,6 @@ public class SQLite {
     }
 
     public <T> T execSQLiteTask(SQLiteTask<T> task) {
-        if (task != null) {
-            SQLiteDatabase dataBase = sqLiteOpener.openDatabase();
-            try {
-                task.onTaskRun(dataBase);
-            } catch (Exception e) {
-                e(null, "execSQLiteTask", e);
-            } finally {
-                sqLiteOpener.closeDatabase();
-            }
-        }
-        return null;
+        return sqLiteOperator.execSQLiteTask(task);
     }
 }
