@@ -18,6 +18,7 @@ public class SQLite {
     private final Map<Class, EntityTable> entityTableMap = new HashMap<>();
     private final Map<Class, TableInfo> tableInfoMap = new HashMap<>();
     private final HistoryEntity historyEntity;
+    private final EntityConverter entityConverter;
     private EntityTable<TableInfo> tableInfoTable;
 
     public SQLite(SQLiteOpenHelper openHelper) {
@@ -25,9 +26,15 @@ public class SQLite {
     }
 
     public SQLite(SQLiteOpenHelper openHelper, HistoryEntity historyEntity, JsonConverter jsonConverter) {
+        if (openHelper == null) {
+            throw new SQLException("SQLiteOpenHelper is null");
+        }
+        if (jsonConverter == null) {
+            e(null, "JsonConverter is null");
+        }
         this.sqLiteOperator = new SQLiteOperator(openHelper);
         this.historyEntity = historyEntity;
-        this.sqLiteOperator.setConverter(new EntityConverter(jsonConverter));
+        this.entityConverter = new EntityConverter(jsonConverter);
         supportEntity = jsonConverter != null;
         if (supportEntity) {
             initTableInfoTable();
@@ -60,10 +67,6 @@ public class SQLite {
 
     public void checkClass(Class entityClass) {
         EntityUtil.checkClass(entityClass, historyEntity.getHistoryClasses(entityClass));
-    }
-
-    public boolean createTable(String sql) {
-        return sqLiteOperator.execSQL(sql);
     }
 
     public boolean createTable(TableSQLBuilder builder) {
@@ -110,7 +113,7 @@ public class SQLite {
                 }
                 tableInfoMap.put(entityClass, tableInfo);
             }
-            table = new EntityTable(sqLiteOperator, entityClass, tableName);
+            table = new EntityTable(sqLiteOperator, entityClass, tableName, entityConverter);
             entityTableMap.put(entityClass, table);
         }
         return table;
@@ -179,13 +182,13 @@ public class SQLite {
         }
     }
 
+    public <T> T execSQLiteTask(SQLiteTask<T> task) {
+        return sqLiteOperator.execSQLiteTask(task);
+    }
+
     private void checkSupport() {
         if (!supportEntity) {
             throw new RuntimeException("getEntityTable fail, unset JsonConverter");
         }
-    }
-
-    public <T> T execSQLiteTask(SQLiteTask<T> task) {
-        return sqLiteOperator.execSQLiteTask(task);
     }
 }
