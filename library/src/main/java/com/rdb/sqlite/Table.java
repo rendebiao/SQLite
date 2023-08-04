@@ -120,7 +120,7 @@ public final class Table {
     }
 
     public <T> ArrayList<T> queryList(String selection, String[] selectionArgs, String groupBy, String having, String orderBy, ObjectReader<T> objectReader) {
-        return queryList(false, selection, selectionArgs, null, null, null, null, objectReader);
+        return queryList(false, selection, selectionArgs, groupBy, having, orderBy, null, objectReader);
     }
 
     public <T> ArrayList<T> queryList(boolean distinct, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, ObjectReader<T> objectReader) {
