@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="inset ContentValues to SQLite" />
+        android:text="inset ContentValues" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/queryView1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="query cursor from SQLite" />
+        android:text="query cursor" />
 
 
     <androidx.appcompat.widget.AppCompatButton
@@ -25,14 +25,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="inset Object to SQLite" />
+        android:text="inset Object" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/queryView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="query object from SQLite" />
+        android:text="query object" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/queryView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="query all tables" />
 
 
     <androidx.appcompat.widget.AppCompatTextView

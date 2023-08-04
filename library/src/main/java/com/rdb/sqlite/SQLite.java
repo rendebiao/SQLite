@@ -182,6 +182,10 @@ public class SQLite {
         }
     }
 
+    public List<String> getTableNames() {
+        return sqLiteOperator.getTableNames();
+    }
+
     public <T> T execSQLiteTask(SQLiteTask<T> task) {
         return sqLiteOperator.execSQLiteTask(task);
     }

@@ -81,7 +81,7 @@ SQLite封装
     初始化：
     SQLiteOpenHelper openHelper = ...;//原生SQLiteOpenHelper实现
     HistoryEntity historyEntity = new HistoryEntity();//历史实体类
-    historyEntity.newHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class).putClass(1, UserEntity.UserEntity1.class);//给实体类设置历史类 用于历史数据升级
+    historyEntity.getOrCreateHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class).putClass(1, UserEntity.UserEntity1.class);//给实体类设置历史类 用于历史数据升级
     JsonConverter jsonConverter = ...;//类中复杂属性将通过转换成json存入数据库，需要json和对象互相转换的能力
     SQLite sqLite = new SQLite(openHelper, historyEntity, jsonConverter);//创建SQLite对象, jsonConverter必须设置
 
@@ -99,7 +99,7 @@ SQLite封装
     1.将旧的UserEntity类备份改名为UserEntity0，
     2.按照需要修改原UserEntity类结构，将其Entity注解的version修改为1
     3.使UserEntity0实现HistoryConverter<UserEntity>接口，实现UserEntity toCurrent()方法，支持将UserEntity0对象转换成UserEntity对象，注意UserEntity新增属性如果注解为非空，需要赋予默认值.
-    4.初始化时将历史类写入historyEntity：historyEntity.newHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class)。
+    4.初始化时将历史类写入historyEntity：historyEntity.getOrCreateHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class)。
 
     注意：实体类有效属性数量必须大于0，有空构造，SQLite有初始化JsonConverter。
 

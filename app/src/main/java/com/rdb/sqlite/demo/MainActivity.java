@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     Button queryView1;
     Button insertView2;
     Button queryView2;
+    Button queryView3;
     TextView resultView;
 
     Table table1;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         queryView1 = findViewById(R.id.queryView1);
         insertView2 = findViewById(R.id.insertView2);
         queryView2 = findViewById(R.id.queryView2);
+        queryView3 = findViewById(R.id.queryView3);
         resultView = findViewById(R.id.resultView);
 
         SQLiteOpenHelper openHelper = new SQLiteOpenHelper(this, "db", null, 1, null) {
@@ -65,7 +67,9 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         HistoryEntity historyEntity = new HistoryEntity();
-        historyEntity.newHistoryClass(UserEntity.class).putClass(0, UserEntity.UserEntity0.class).putClass(1, UserEntity.UserEntity1.class);
+        historyEntity.getOrCreateHistoryClass(UserEntity.class)
+                .putClass(0, UserEntity.UserEntity0.class)
+                .putClass(1, UserEntity.UserEntity1.class);
 
         //Table
         SQLite sqLite = new SQLite(openHelper, historyEntity, new JsonConverter() {
@@ -141,7 +145,15 @@ public class MainActivity extends AppCompatActivity {
         queryView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<UserEntity> result = table2.queryAll(UserEntity.class);
+                List<UserEntity> result = table2.queryAll();
+                resultView.setText("SQLite:\n" + gson.toJson(result));
+            }
+        });
+
+        queryView3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<String> result = sqLite.getTableNames();
                 resultView.setText("SQLite:\n" + gson.toJson(result));
             }
         });

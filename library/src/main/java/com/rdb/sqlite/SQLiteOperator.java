@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class SQLiteOperator {
@@ -102,16 +104,39 @@ class SQLiteOperator {
         if (!TextUtils.isEmpty(tableName)) {
             SQLiteDatabase dataBase = openDatabase();
             String sql = "SELECT name FROM sqlite_master WHERE type = 'table'";
+            try {
+                Cursor cursor = dataBase.rawQuery(sql, null);
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(0);
+                    if (tableName.equals(name)) {
+                        exists = true;
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                SQLite.e(TAG, "getTableNames", e);
+            } finally {
+                closeDatabase();
+            }
+        }
+        return exists;
+    }
+
+    public List<String> getTableNames() {
+        List<String> names = new ArrayList<>();
+        SQLiteDatabase dataBase = openDatabase();
+        String sql = "SELECT name FROM sqlite_master WHERE type = 'table'";
+        try {
             Cursor cursor = dataBase.rawQuery(sql, null);
             while (cursor.moveToNext()) {
                 String name = cursor.getString(0);
-                if (tableName.equals(name)) {
-                    exists = true;
-                    break;
-                }
+                names.add(name);
             }
+        } catch (Exception e) {
+            SQLite.e(TAG, "getTableNames", e);
+        } finally {
             closeDatabase();
         }
-        return exists;
+        return names;
     }
 }

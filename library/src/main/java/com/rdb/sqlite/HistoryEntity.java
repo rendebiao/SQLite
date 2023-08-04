@@ -9,7 +9,7 @@ public class HistoryEntity {
 
     private final Map<Class, HistoryClass> historyClassMap = new HashMap<>();
 
-    public HistoryClass newHistoryClass(Class entityClass) {
+    public HistoryClass getOrCreateHistoryClass(Class entityClass) {
         HistoryClass historyClass = historyClassMap.get(entityClass);
         if (historyClass == null) {
             historyClass = new HistoryClass(entityClass);

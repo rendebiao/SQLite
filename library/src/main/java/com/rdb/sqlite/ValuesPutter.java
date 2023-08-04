@@ -5,7 +5,7 @@ import android.content.ContentValues;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-class ValuesPutter {
+public class ValuesPutter {
 
     private final ContentValues contentValues = new ContentValues();
 
